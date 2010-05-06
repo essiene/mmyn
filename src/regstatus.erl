@@ -24,23 +24,13 @@ get(Msisdn) ->
                     </soapenv:Body> 
             </soapenv:Envelope>"),
 
-    try ibrowse:send_req(
-            "http://10.1.230.100:5013/SystemCISExtension/SystemCISExtension", [
+    util:soap_request("http://10.1.230.100:5013/SystemCISExtension/SystemCISExtension", [
             {"Accept-Encoding", "identity"},
             {"Soapaction", ""},
             {"User-Agent", "Mmayen/1.0"},
             {"Authorization", Auth}, 
             {"Content-Type", "text/xml"}],
-            post, 
-            Req2) of
-        {ok, "200", _Headers, Body} -> 
-            parse(Body);
-        {ok, Status, _, _} -> 
-            #soap_response{status=Status, message="HTTP Error"}
-    catch 
-        _Any:Message ->
-            #soap_response{status=1000, message=Message}
-    end.
+            Req2, fun parse/1).
 
 parse(Xml) when is_list(Xml) ->
     try erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process/2) of

@@ -24,16 +24,13 @@ get(Msisdn) ->
                     </soapenv:Body> 
                 </soapenv:Envelope>"),
 
-    {ok, "200", _Headers, Body} = ibrowse:send_req(
-            "http://10.1.230.100:5003/IS/MTNN/OSB/SV/ProxyServices/GetProdInstDetailsPS", [
+    util:soap_request("http://10.1.230.100:5003/IS/MTNN/OSB/SV/ProxyServices/GetProdInstDetailsPS", [
             {"Accept-Encoding", "identity"},
             {"Soapaction", ""},
             {"User-Agent", "Mmayen/1.0"},
             {"Authorization", Auth}, 
             {"Content-Type", "text/xml"}],
-            post, 
-            Req2),
-    parse(Body).
+            Req2, fun parse/1).
 
 parse(Xml) when is_list(Xml) ->
     {ok, Response, _Tail} = erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process/2),
@@ -51,7 +48,8 @@ process({characters, X}, #soap_response{flag='ERRMSG'}=Res) ->
 process({characters, "SIM Card"}, #soap_response{flag='EQUIPMENT'}=Res) ->
     Res#soap_response{flag='READ_PUK'};
 process({characters, X}, #soap_response{flag='PUK'}=Res) ->
-    Res#soap_response{puk=X, flag=undefined};
+    Msg = "Your PUK is " ++ X,
+    Res#soap_response{message=Msg, flag=undefined};
 process({startElement, _, "returnCode", _, _}, Res) ->
     Res#soap_response{flag='STATUS'};
 process({startElement, _, "codeDescription", _, _}, Res) ->
