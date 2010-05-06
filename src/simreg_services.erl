@@ -22,8 +22,8 @@ msisdn_strip(Msisdn, MinLen) when is_list(Msisdn), is_integer(MinLen) ->
 msisdn_strip(Msisdn, _) ->
     binary_to_list(Msisdn).
 
-handle_sms(Src, "789", ["mmayen" | _Rest]) ->
-    simreg_tx:sendsms("Doo Doo", Src, "Mmayen is the bestest!");
+handle_sms(Src, "789", ["-mmyn#vsn" | _Rest]) ->
+    simreg_tx:sendsms("mmyn", Src, "eng: Mmayen\nvsn: 1.0\nos: Solaris 10");
 
 handle_sms(Src, "789", ["help" | _Rest]) ->
     util:sms_response(Src, "help) Menu\npuk) Get puk\nreg)Get status");
@@ -61,7 +61,6 @@ handle_sms(Src, "789", ["reg" | _Rest]) ->
         R ->
             util:sms_response(Src, R)
     end;
-
 
 handle_sms(Src, Dst, WordList) ->
     error_logger:info_report([unhandled_sms, {src, Src}, {dst, Dst}, {wordlist, WordList}]).
