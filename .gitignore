@@ -1,0 +1,14 @@
+build
+dist
+commit
+diff
+*.beam
+erl_crash.dump
+ebin
+*.tar.gz
+*.boot
+*.script
+*.zip
+*.tar.bz2
+*.rpm
+*.patch
