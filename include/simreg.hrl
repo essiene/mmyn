@@ -3,7 +3,7 @@
 
 -include_lib("mmayen/include/smpp.hrl").
 
--record(soap_response, {status, message, puk, flag}).
+-record(soap_response, {status, message, flag}).
 
 -define(SMSC_HOST, "10.200.213.4").
 -define(SMSC_PORT, 10000).

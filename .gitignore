@@ -4,7 +4,6 @@ commit
 diff
 *.beam
 erl_crash.dump
-ebin
 *.tar.gz
 *.boot
 *.script
