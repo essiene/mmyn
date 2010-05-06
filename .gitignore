@@ -12,3 +12,4 @@ ebin
 *.tar.bz2
 *.rpm
 *.patch
+rel/simreg
