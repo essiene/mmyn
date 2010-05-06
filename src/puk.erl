@@ -52,13 +52,13 @@ process({characters, "SIM Card"}, #soap_response{flag='EQUIPMENT'}=Res) ->
     Res#soap_response{flag='READ_PUK'};
 process({characters, X}, #soap_response{flag='PUK'}=Res) ->
     Res#soap_response{puk=X, flag=undefined};
-process({startElement, _, "returnCode", "get", _}, Res) ->
+process({startElement, _, "returnCode", _, _}, Res) ->
     Res#soap_response{flag='STATUS'};
-process({startElement, _, "codeDescription", "get", _}, Res) ->
+process({startElement, _, "codeDescription", _, _}, Res) ->
     Res#soap_response{flag='ERRMSG'};
-process({startElement, _, "EQUIPMENT_TYPE_NAME", "get", _}, Res) ->
+process({startElement, _, "EQUIPMENT_TYPE_NAME", _, _}, Res) ->
     Res#soap_response{flag='EQUIPMENT'};
-process({startElement, _, "PUK", "get", _}, #soap_response{flag='READ_PUK'}=Res) ->
+process({startElement, _, "PUK", _, _}, #soap_response{flag='READ_PUK'}=Res) ->
     Res#soap_response{flag='PUK'};
 process(_, Accm) ->
     Accm.

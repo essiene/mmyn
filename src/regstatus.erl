@@ -64,9 +64,9 @@ process({characters, X}, #soap_response{flag='ERRMSG'}=Res) ->
     Res#soap_response{message=X, flag=undefined};
 process({characters, X}, #soap_response{flag='PUK'}=Res) ->
     Res#soap_response{puk=X, flag=undefined};
-process({startElement, _, "ErrorCode", "sys", _}, Res) ->
+process({startElement, _, "ErrorCode", _, _}, Res) ->
     Res#soap_response{flag='STATUS'};
-process({startElement, _, "ErrorMessage", "sys", _}, Res) ->
+process({startElement, _, "ErrorMessage", _, _}, Res) ->
     Res#soap_response{flag='ERRMSG'};
 process(_, Accm) ->
     Accm.
