@@ -33,15 +33,8 @@ get(Msisdn) ->
             Req2, fun parse/1).
 
 parse(Xml) when is_list(Xml) ->
-    try erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process/2) of
-        {ok, Response, _Tail} -> 
-            Response;
-        _Other ->
-            #soap_response{status=1001, message="Parsing Error"}
-    catch
-        _Any:Message ->
-            #soap_response{status=1002, message=Message}
-    end.
+    {ok, Response, _Tail} = erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process/2),
+    Response.
 
 
 
@@ -52,8 +45,6 @@ process({characters, X}, #soap_response{flag='STATUS'}=Res) ->
     Res#soap_response{status=Rc, flag=undefined};
 process({characters, X}, #soap_response{flag='ERRMSG'}=Res) ->
     Res#soap_response{message=X, flag=undefined};
-process({characters, X}, #soap_response{flag='PUK'}=Res) ->
-    Res#soap_response{puk=X, flag=undefined};
 process({startElement, _, "ErrorCode", _, _}, Res) ->
     Res#soap_response{flag='STATUS'};
 process({startElement, _, "ErrorMessage", _, _}, Res) ->
