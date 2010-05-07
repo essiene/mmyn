@@ -5,6 +5,8 @@
 
 -record(soap_response, {status, message, op, flag}).
 
+-record(txq_req, {src, dst, message}).
+
 -define(SMSC_HOST, "10.200.213.4").
 -define(SMSC_PORT, 10000).
 -define(SYSTEM_ID, "cisaccount").
