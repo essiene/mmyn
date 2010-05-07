@@ -1,9 +1,11 @@
 -module(simreg_misultin).
 -behaviour(gen_server).
 -include_lib("misultin/include/misultin.hrl").
+-include("simreg.hrl").
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -export([start_link/3, stop/0]).
+-export([get/2,post/2,put/2,delete/2, get_value/2]).
 -export([handle_http/1]).
 
 
@@ -50,5 +52,59 @@ handle_http(Req) ->
     Method2 = string:to_lower(Method1),
     Method3 = list_to_atom(Method2),
     Resource = Req:resource([lowercase, urldecode]),
-    error_logger:info_msg("Dispatching webservice. Method:Resource: ~p:~p~n", [Method3, Resource]),
-    apply(webservice, Method3, [Resource, Req]).
+    error_logger:info_msg("Dispatching: simreg_misultin:~p(~p, ...)~n", [Method3, Resource]),
+    simreg_misultin:Method3(Resource, Req).
+
+
+get(["sendsms"], Req) ->
+    QueryString = Req:parse_qs(),
+
+    error_logger:info_msg("QueryString: ~p~n", [QueryString]),
+
+    case proplists:is_defined("wsdl", QueryString) of
+        true -> 
+            Req:ok([{"Content-Type", "text/xml"}], ?WSDL);
+        false -> 
+            Req:ok([{"Content-Type", "text/plain"}], "Mmayen/1.0\r\nSimReg Services/1.0\r\n")
+    end;
+
+get(["send"], Req) ->
+    QueryString = Req:parse_qs(),
+
+    error_logger:info_msg("QueryString: ~p~n", [QueryString]),
+
+    {"to", Dst} = proplists:lookup("to", QueryString),
+    {"msg", Msg} = proplists:lookup("msg", QueryString),
+
+    ok = txq:push(#txq_req{src="SimReg", dst=Dst, message=Msg}),
+
+    Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n");
+
+get(Other, Req) ->
+    error_logger:info_msg("Get request: ~p ~p~n", [Other, Req]),
+    Req:respond(404, "Foo Found\r\n").
+
+post(["sendsms"], Req) ->
+    #soap_response{status=Status, message=Message} = sms:send("SimReg", Req:get(body)),
+    Xml0 = io_lib:format(?SENDSMS_RESPONSE_TEMPLATE, [Status, Message]),
+    Xml1 = lists:flatten(Xml0),
+    error_logger:info_msg("Response: ~p~n", [Xml1]),
+    Req:ok([{"Content-Type", "text/xml"}], Xml1);
+    
+post(_Path, Req) ->
+    Req:respond(404, "Not Found\r\n").
+
+put(_Path, Req) ->
+    Req:respond(404, "Not Found\r\n").
+
+delete(_Path, Req) ->
+    Req:respond(404, "Not Found\r\n").
+
+
+get_value(Key, QueryString) ->
+    case proplists:get_value(Key, QueryString) of
+        undefined ->
+            throw({required_parameter_missing, Key});
+        Value ->
+            Value
+    end.

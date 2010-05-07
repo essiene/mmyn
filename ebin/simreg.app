@@ -6,8 +6,8 @@
         [ 
             txq, simreg_tx, simreg_rx, simreg_services,
             nanny, simreg, simreg_rx_sup,
-            puk, reg, simreg_misultin, webservice,
-            sms, simregctl, util
+            puk, reg, simreg_misultin, sms, simregctl,
+            util
         ]
    },
 
