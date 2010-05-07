@@ -6,7 +6,7 @@
         [ 
             simreg_tx, simreg_rx, simreg_services,
             simreg_manager, simreg, simreg_rx_sup,
-            puk, regstatus, simreg_misultin, webservice,
+            puk, reg, simreg_misultin, webservice,
             sms, simregctl, util
         ]
    },

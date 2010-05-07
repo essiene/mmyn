@@ -1,4 +1,4 @@
--module(regstatus).
+-module(reg).
 -include("simreg.hrl").
 
 -export([get/1]).
