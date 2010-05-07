@@ -1,5 +1,5 @@
 -module(util).
--export([soap_request/5, sms_response/2]).
+-export([soap_request/5, sms_response/2, smsc_params/0]).
 
 -include("simreg.hrl").
 
@@ -39,3 +39,10 @@ sms_response(Dest, #soap_response{status=_N, message=Msg}) ->
 sms_response(Dest, Msg) ->
     simreg_tx:sendsms(?SMS_SRC, Dest, Msg).
     
+smsc_params() -> 
+    {ok, Host} = application:get_env(smsc_host), 
+    {ok, Port} = application:get_env(smsc_port), 
+    {ok, SystemId} = application:get_env(smsc_username), 
+    {ok, Password} = application:get_env(smsc_password), 
+    {Host, Port, SystemId, Password}.
+

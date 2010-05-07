@@ -17,10 +17,10 @@
 -record(state, {host, port, system_id, password, smpp}).
 
 start_link() ->
-    gen_esme:start_link({local, ?MODULE}, ?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD], []).
+    gen_esme:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 start() ->
-    gen_esme:start({local, ?MODULE}, ?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD], []).
+    gen_esme:start({local, ?MODULE}, ?MODULE, [], []).
 
 stop() ->
     gen_esme:cast(?MODULE, stop).
@@ -29,6 +29,7 @@ sendsms(Source, Dest, Msg) ->
     gen_esme:call(?MODULE, {sendsms, Source, Dest, Msg}).
 
 init([Host, Port, SystemId, Password]) ->
+    {Host, Port, SystemId, Password} = util:smsc_params(),
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
             #state{host=Host, port=Port, system_id=SystemId, password=Password}}.

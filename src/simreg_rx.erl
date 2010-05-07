@@ -17,7 +17,7 @@
 -record(state, {host, port, system_id, password, smpp, callback, id}).
 
 start_link(Id) ->
-    gen_esme:start_link(?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD, simreg_services, Id], []).
+    gen_esme:start_link(?MODULE, [simreg_services, Id], []).
 
 start(Id) ->
     gen_esme:start(?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD, simreg_services, Id], []).
@@ -25,7 +25,8 @@ start(Id) ->
 stop(Pid) ->
     gen_esme:cast(Pid, stop).
 
-init([Host, Port, SystemId, Password, Callback, Id]) ->
+init([Callback, Id]) ->
+    {Host, Port, SystemId, Password} = util:smsc_params(),
     {ok, {Host, Port, 
             #bind_receiver{system_id=SystemId, password=Password}}, 
             #state{host=Host, port=Port, system_id=SystemId, password=Password,
