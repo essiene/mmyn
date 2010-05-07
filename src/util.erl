@@ -29,6 +29,9 @@ sms_response(Dest, #soap_response{message=undefined}) ->
 sms_response(Dest, #soap_response{status=0, message=Msg}) ->
     simreg_tx:sendsms(?SMS_SRC, Dest, Msg);
 
+sms_response(Dest, #soap_response{status=100, op=reg, message=Msg}) ->
+    simreg_tx:sendsms(?SMS_SRC, Dest, Msg);
+
 sms_response(Dest, #soap_response{status=_N, message=Msg}) ->
     simreg_tx:sendsms(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
     simreg_tx:sendsms(?SMS_ERR_SRC, ?NOTIFY_MSISDN, Msg);
