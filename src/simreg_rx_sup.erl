@@ -10,7 +10,7 @@
 -behaviour(supervisor).
 
 %% External exports
--export([start_link/0, upgrade/0, start_child/0, children/0]).
+-export([start_link/0, upgrade/0, start_child/1]).
 
 %% supervisor callbacks
 -export([init/1]).
@@ -39,20 +39,8 @@ upgrade() ->
     [supervisor:start_child(?MODULE, Spec) || Spec <- Specs],
     ok.
 
-start_child() ->
-    supervisor:start_child(?MODULE, []).
-
-children() ->
-    Children = supervisor:which_children(?MODULE),
-    get_pids_from_spec(Children).
-
-get_pids_from_spec(Children) ->
-    get_pids_from_spec(Children, []).
-
-get_pids_from_spec([], Accm) ->
-    Accm;
-get_pids_from_spec([{_, Pid, worker, [simreg_rx]}|Rest], Accm) ->
-    get_pids_from_spec(Rest, [Pid|Accm]).
+start_child(Id) ->
+    supervisor:start_child(?MODULE, [Id]).
 
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
@@ -60,7 +48,7 @@ init([]) ->
 
     Rx = {simreg_rx, 
         {simreg_rx, start_link, []},
-        permanent, 5000, worker, [simreg_rx]},
+        transient, 5000, worker, [simreg_rx]},
 
     Processes = [Rx],
 
