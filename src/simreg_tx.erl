@@ -28,7 +28,7 @@ stop() ->
 sendsms(Source, Dest, Msg) ->
     gen_esme:call(?MODULE, {sendsms, Source, Dest, Msg}).
 
-init([Host, Port, SystemId, Password]) ->
+init([]) ->
     {Host, Port, SystemId, Password} = util:smsc_params(),
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
