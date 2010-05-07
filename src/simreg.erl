@@ -46,17 +46,17 @@ stop(_State) ->
 
 init([]) ->
 
-    RxSup = {simreg_rx_sup,
-        {simreg_rx_sup, start_link, []},
-        permanent, infinity, supervisor, [simreg_rx_sup]},
+    RxSup = {rx_sup,
+        {rx_sup, start_link, []},
+        permanent, infinity, supervisor, [rx_sup]},
+
+    TxSup = {tx_sup,
+        {tx_sup, start_link, []},
+        permanent, infinity, supervisor, [tx_sup]},
 
     TxQ = {txq, 
         {txq, start_link, []},
         permanent, 5000, worker, [txq]},
-
-    Tx = {simreg_tx, 
-        {simreg_tx, start_link, []},
-        permanent, 5000, worker, [simreg_tx]},
 
     Nanny = {nanny,
         {nanny, start_link, []},
@@ -66,6 +66,6 @@ init([]) ->
         {simreg_misultin, start_link, ["0.0.0.0", 11581, 30]},
         permanent, 5000, worker, [simreg_misultin]},
 
-    Processes = [RxSup, TxQ, Tx, Nanny, Webservice],
+    Processes = [RxSup, TxSup, TxQ, Nanny, Webservice],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.
