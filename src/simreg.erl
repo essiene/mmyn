@@ -54,14 +54,14 @@ init([]) ->
         {simreg_tx, start_link, []},
         permanent, 5000, worker, [simreg_tx]},
 
-    Manager = {simreg_manager,
-        {simreg_manager, start_link, [?NUM_RX]},
-        permanent, 5000, worker, [simreg_manager]},
+    Nanny = {nanny,
+        {nanny, start_link, []},
+        permanent, 5000, worker, [nanny]},
 
     Webservice = {simreg_misultin,
         {simreg_misultin, start_link, ["0.0.0.0", 11581, 30]},
         permanent, 5000, worker, [simreg_misultin]},
 
-    Processes = [RxSup, Tx, Manager, Webservice],
+    Processes = [RxSup, Tx, Nanny, Webservice],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.

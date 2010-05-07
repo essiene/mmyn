@@ -5,14 +5,14 @@
     {modules, 
         [ 
             simreg_tx, simreg_rx, simreg_services,
-            simreg_manager, simreg, simreg_rx_sup,
+            nanny, simreg, simreg_rx_sup,
             puk, reg, simreg_misultin, webservice,
             sms, simregctl, util
         ]
    },
 
   {registered, 
-      [simreg_manager, simreg, simreg_tx, simreg_rx_sup, simreg_misultin]
+      [simreg, simreg_tx, simreg_rx_sup, nanny, simreg_misultin]
   },
 
   {applications, 
