@@ -4,6 +4,8 @@
         handle_cast/2,handle_info/2,
         terminate/2,code_change/3]).
 
+-export([start_link/0, push/1, pop/0]).
+
 -record(st, {q}).
 
 start_link() ->
@@ -14,3 +16,22 @@ push(Item) ->
 
 pop() ->
     gen_server:call(?MODULE, pop).
+
+
+init([]) ->
+    {ok, #st{q=queue:new()}}.
+
+handle_call(R, _F, St) ->
+    {reply, {error, {illegal_request, R}}, St}.
+
+handle_cast(_R, St) ->
+    {noreply, St}.
+
+handle_info(_R, St) ->
+    {noreply, St}.
+
+terminate(_R, _St) ->
+    ok.
+
+code_change(_OldVsn, St, _Extra) ->
+    {ok, St}.

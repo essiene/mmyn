@@ -50,6 +50,10 @@ init([]) ->
         {simreg_rx_sup, start_link, []},
         permanent, infinity, supervisor, [simreg_rx_sup]},
 
+    TxQ = {txq, 
+        {txq, start_link, []},
+        permanent, 5000, worker, [txq]},
+
     Tx = {simreg_tx, 
         {simreg_tx, start_link, []},
         permanent, 5000, worker, [simreg_tx]},
@@ -62,6 +66,6 @@ init([]) ->
         {simreg_misultin, start_link, ["0.0.0.0", 11581, 30]},
         permanent, 5000, worker, [simreg_misultin]},
 
-    Processes = [RxSup, Tx, Nanny, Webservice],
+    Processes = [RxSup, TxQ, Tx, Nanny, Webservice],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.

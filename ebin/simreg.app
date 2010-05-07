@@ -4,7 +4,7 @@
     {vsn, "1.0"}, 
     {modules, 
         [ 
-            simreg_tx, simreg_rx, simreg_services,
+            txq, simreg_tx, simreg_rx, simreg_services,
             nanny, simreg, simreg_rx_sup,
             puk, reg, simreg_misultin, webservice,
             sms, simregctl, util
@@ -12,7 +12,7 @@
    },
 
   {registered, 
-      [simreg, simreg_tx, simreg_rx_sup, nanny, simreg_misultin]
+      [simreg, txq, simreg_tx, simreg_rx_sup, nanny, simreg_misultin]
   },
 
   {applications, 
