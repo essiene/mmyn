@@ -16,7 +16,7 @@ start_link() ->
     gen_fsm:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 add_rx() ->
-    gen_fms:sync_send_event(?MODULE, add_rx).
+    gen_fsm:sync_send_event(?MODULE, add_rx).
 
 init([]) ->
     {ok, Count} = application:get_env(rx_count),
