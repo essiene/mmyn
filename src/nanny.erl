@@ -5,8 +5,9 @@
         terminate/3,code_change/4]).
 
 -export([idle/2, active_rx/2]).
+-export([active_rx/3]).
 
--export([start_link/0]).
+-export([start_link/0, add_rx/0]).
 
 -record(st, {rx, rx_count=0}).
 
@@ -14,6 +15,8 @@
 start_link() ->
     gen_fsm:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+add_rx() ->
+    gen_fms:sync_send_event(?MODULE, add_rx).
 
 init([]) ->
     {ok, Count} = application:get_env(rx_count),
@@ -42,11 +45,26 @@ code_change(_OldVsn, StName, St, _Extra) ->
     {ok, StName, St}.
 
 
+% StateName/2
+
 idle(babysit, St) ->
     babysit(St).
 
 active_rx(babysit, St) ->
     babysit(St).
+
+% StateName/3
+
+active_rx(add_rx, _From, #st{rx=Ets, rx_count=Count}=St) ->
+    case start_if_not_running(Ets, Count+1) of
+        ok ->
+            {next_state, active_rx, St#st{rx_count=Count+1}};
+        {error, _Reason} ->
+            {next_state, active_rx, St}
+    end.
+
+
+% Privates
 
 babysit(#st{rx=Ets}=St) ->
     Count = start_all(Ets),
@@ -78,6 +96,8 @@ start_next(Ets, Id0, C0) ->
 
 start_if_not_running(Ets, Id) ->
     case ets:lookup(Ets, Id) of
+        [] ->
+            start_child(Ets, Id);
         [{Id, undefined}] ->
             start_child(Ets, Id);
         [{Id, Pid}] when is_pid(Pid) ->
