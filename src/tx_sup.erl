@@ -3,7 +3,7 @@
 
 %% @doc Supervisor for the simreg application.
 
--module(simreg_rx_sup).
+-module(tx_sup).
 -author('author <author@example.com>').
 -include("simreg.hrl").
 
@@ -46,10 +46,10 @@ start_child(Id) ->
 %% @doc supervisor callback.
 init([]) ->
 
-    Rx = {simreg_rx, 
-        {simreg_rx, start_link, []},
-        transient, 5000, worker, [simreg_rx]},
+    Tx = {simreg_tx, 
+        {simreg_tx, start_link, []},
+        transient, 5000, worker, [simreg_tx]},
 
-    Processes = [Rx],
+    Processes = [Tx],
 
     {ok, {{simple_one_for_one, 10, 10}, Processes}}.
