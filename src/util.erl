@@ -1,5 +1,5 @@
 -module(util).
--export([soap_request/4, sms_response/2]).
+-export([soap_request/5, sms_response/2]).
 
 -include("simreg.hrl").
 
@@ -8,17 +8,18 @@
 -define(NOTIFY_MSISDN, "2347062022125").
 -define(MSG_SVC_UNAVAIL, "This service is temporarily unavailable. Please try again later").
 
-soap_request(Url, RqHdrs, RqBody, RsFun) ->
+soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
     try ibrowse:send_req(Url, RqHdrs, post, RqBody) of
         {ok, "200", _, RsBody} -> 
-            RsFun(RsBody);
+            S = RsFun(RsBody),
+            S#soap_response{op=Op};
         {ok, Status, _, _} -> 
             Msg = "HTTP " ++ Status,
-            #soap_response{status=Status, message=Msg}
+            #soap_response{status=Status, message=Msg, op=Op}
     catch 
         Type:Message ->
             Msg = lists:flatten(iolib:format("~p : ~p", [Type, Message])),
-            #soap_response{status=1000, message=Msg}
+            #soap_response{status=1000, message=Msg, op=Op}
     end.
 
 sms_response(Dest, #soap_response{message=undefined}) ->
