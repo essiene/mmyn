@@ -28,9 +28,9 @@ handle_call({push, Item}, _F, #st{q=Q}=St) ->
 handle_call(pop, _F, #st{q=Q}=St) ->
     case queue:out(Q) of
         {empty, Q} -> 
-            {reply, {ok, '$empty'}, St};
+            {reply, '$empty', St};
         {{value, V}, Q1} ->
-            {reply, {ok, V}, St#st{q=Q1}}
+            {reply, V, St#st{q=Q1}}
     end;
 
 handle_call(R, _F, St) ->
