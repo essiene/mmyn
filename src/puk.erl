@@ -30,7 +30,7 @@ get(Msisdn) ->
             {"User-Agent", "Mmayen/1.0"},
             {"Authorization", Auth}, 
             {"Content-Type", "text/xml"}],
-            Req2, fun parse/1).
+            Req2, fun parse/1, puk).
 
 parse(Xml) when is_list(Xml) ->
     {ok, Response, _Tail} = erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process/2),
