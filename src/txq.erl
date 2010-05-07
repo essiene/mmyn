@@ -21,6 +21,18 @@ pop() ->
 init([]) ->
     {ok, #st{q=queue:new()}}.
 
+handle_call({push, Item}, _F, #st{q=Q}=St) ->
+    Q1 = queue:in(Item, Q),
+    {reply, ok, St#st{q=Q1}};
+
+handle_call(push, _F, #st{q=Q}=St) ->
+    case queue:out(Q) of
+        {empty, Q} -> 
+            {reply, {ok, '$empty'}, St};
+        {{value, V}, Q1} ->
+            {reply, {ok, V}, St#st{q=Q1}}
+    end;
+
 handle_call(R, _F, St) ->
     {reply, {error, {illegal_request, R}}, St}.
 
