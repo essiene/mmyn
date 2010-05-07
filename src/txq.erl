@@ -25,7 +25,7 @@ handle_call({push, Item}, _F, #st{q=Q}=St) ->
     Q1 = queue:in(Item, Q),
     {reply, ok, St#st{q=Q1}};
 
-handle_call(push, _F, #st{q=Q}=St) ->
+handle_call(pop, _F, #st{q=Q}=St) ->
     case queue:out(Q) of
         {empty, Q} -> 
             {reply, {ok, '$empty'}, St};
