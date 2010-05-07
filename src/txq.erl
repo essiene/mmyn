@@ -23,6 +23,7 @@ init([]) ->
 
 handle_call({push, Item}, _F, #st{q=Q}=St) ->
     Q1 = queue:in(Item, Q),
+    simreg_tx:wake(),
     {reply, ok, St#st{q=Q1}};
 
 handle_call(pop, _F, #st{q=Q}=St) ->
