@@ -4,11 +4,11 @@ commit
 diff
 *.beam
 erl_crash.dump
-*.tar.gz
+*.tar.*
+*.tar
 *.boot
 *.script
 *.zip
-*.tar.bz2
 *.rpm
 *.patch
 rel/simreg
