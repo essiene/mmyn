@@ -14,12 +14,12 @@
 
 -export([start_link/1, start/1, stop/1, wake/1]).
 
--define(WAIT_MAX, 360000).
--define(WAIT_MIN, 100).
--define(WAIT_GROW, 1000).
+-define(BK_OFF_MAX, 360000).
+-define(BK_OFF_MIN, 100).
+-define(BK_OFF_GROW, 1000).
 -define(TXQ_CHK, txq_chk).
 
--record(st, {host, port, system_id, password, smpp, wait, wait_ref, id}).
+-record(st, {host, port, system_id, password, smpp, backoff, backoff_ref, id}).
 
 start_link(Id) ->
     gen_esme:start_link(?MODULE, [Id], []).
@@ -38,11 +38,11 @@ init([Id]) ->
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
             #st{host=Host, port=Port, system_id=SystemId, password=Password,
-                wait=?WAIT_MIN, id=Id}}.
+                backoff=?BK_OFF_MIN, id=Id}}.
 
 handle_bind(Smpp, #st{id=Id}=St0) ->
     error_logger:info_msg("Transmitter ~p bound. Smpp: ~p~n", [Id, Smpp]),
-    St1 = wait(St0),
+    St1 = backoff(St0),
     {noreply, St1#st{smpp=Smpp}}.
 
 handle_pdu(Pdu, #st{id=Id}=St) ->
@@ -56,7 +56,7 @@ handle_call(Req, _From, St) ->
     {reply, {error, Req}, St}.
 
 handle_cast(wake, St) ->
-    wait_normal(St);
+    backoff_normal(St);
 handle_cast(stop, St) ->
     {stop, normal, St};
 handle_cast(_Req, St) ->
@@ -66,10 +66,10 @@ handle_info(?TXQ_CHK, #st{smpp=Smpp, id=Id}=St) ->
     error_logger:info_msg("Transmitter ~p is awake~n", [Id]),
     case txq:pop() of 
         '$empty' ->
-            wait_grow(St);
+            backoff_grow(St);
         #txq_req{src=Src, dst=Dest, message=Msg} ->
             smpp:send(Smpp, #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}),
-            wait_normal(St)
+            backoff_normal(St)
     end;
 
 handle_info(_Req, St) ->
@@ -81,25 +81,25 @@ terminate(_Reason, _St) ->
 code_change(_OldVsn, St, _Extra) ->
     {noreply, St}.
 
-wait(#st{wait=N, wait_ref=undefined, id=Id}=St) ->
+backoff(#st{backoff=N, backoff_ref=undefined, id=Id}=St) ->
     error_logger:info_msg("Transmitter ~p goint to sleep. Will awake in ~p ms~n", [Id, N]),
     {ok, TRef} = timer:send_after(N, ?TXQ_CHK),
-    St#st{wait_ref=TRef};
-wait(#st{wait_ref=TRef}=St) ->
+    St#st{backoff_ref=TRef};
+backoff(#st{backoff_ref=TRef}=St) ->
     timer:cancel(TRef),
-    wait(St#st{wait_ref=undefined}).
+    backoff(St#st{backoff_ref=undefined}).
 
 
-wait_grow(#st{wait=Wait}=St) ->
-    case Wait + ?WAIT_GROW of
-        N when N < ?WAIT_MAX ->
-            wait(N),
-            {noreply, St#st{wait=N}};
+backoff_grow(#st{backoff=Wait}=St) ->
+    case Wait + ?BK_OFF_GROW of
+        N when N < ?BK_OFF_MAX ->
+            backoff(N),
+            {noreply, St#st{backoff=N}};
         N ->
-            wait(N),
-            {noreply, St#st{wait=?WAIT_MAX}}
+            backoff(N),
+            {noreply, St#st{backoff=?BK_OFF_MAX}}
     end.
 
-wait_normal(St) ->
-    wait(?WAIT_MIN),
-    {noreply, St#st{wait=?WAIT_MIN}}.
+backoff_normal(St) ->
+    backoff(?BK_OFF_MIN),
+    {noreply, St#st{backoff=?BK_OFF_MIN}}.
