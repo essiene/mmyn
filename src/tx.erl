@@ -90,16 +90,13 @@ backoff(#st{backoff_ref=TRef}=St) ->
     backoff(St#st{backoff_ref=undefined}).
 
 
-backoff_grow(#st{backoff=Wait}=St) ->
-    case Wait + ?BK_OFF_GROW of
+backoff_grow(#st{backoff=BkOff}=St) ->
+    case BkOff + ?BK_OFF_GROW of
         N when N < ?BK_OFF_MAX ->
-            backoff(N),
-            {noreply, St#st{backoff=N}};
-        N ->
-            backoff(N),
-            {noreply, St#st{backoff=?BK_OFF_MAX}}
+            {noreply, backoff(St#st{backoff=N})};
+        _ ->
+            {noreply, backoff(St#st{backoff=?BK_OFF_MAX})}
     end.
 
 backoff_normal(St) ->
-    backoff(?BK_OFF_MIN),
-    {noreply, St#st{backoff=?BK_OFF_MIN}}.
+    {noreply, backoff(St#st{backoff=?BK_OFF_MIN})}.
