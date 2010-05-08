@@ -45,6 +45,10 @@ stop(_State) ->
 
 
 init([]) ->
+    BackOff = {backoff,
+        {backoff, start_link, []},
+        permanent, 5000, worker, [backoff]},
+
     TxQ = {txq, 
         {txq, start_link, []},
         permanent, 5000, worker, [txq]},
@@ -69,6 +73,6 @@ init([]) ->
         {simreg_misultin, start_link, []},
         permanent, 5000, worker, [simreg_misultin]},
 
-    Processes = [TxQ, TxSup, TxNanny, RxSup, RxNanny, Webservice],
+    Processes = [BackOff, TxQ, TxSup, TxNanny, RxSup, RxNanny, Webservice],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.
