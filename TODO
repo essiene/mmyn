@@ -8,3 +8,5 @@
   will implement. This gen_sms behaviour module will also export
   gen_sms:send(Src, Dst, Msg), which will use preconfigured defaults
   for the plugin for the remaining #submit_sm{} parameters
+* Make use of erlcfg
+* Make use of log4erl?
