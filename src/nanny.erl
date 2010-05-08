@@ -110,7 +110,7 @@ start_if_not_running(Ets, Id) ->
     end.
             
 start_child(Ets, Id) ->
-    case simreg_rx_sup:start_child(Id) of
+    case rx_sup:start_child(Id) of
         {ok, Pid} ->
             ets:insert(Ets, {Id, Pid}),
             error_logger:info_msg("Receiver ~p started with Pid: ~p~n", [Id, Pid]),
