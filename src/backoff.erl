@@ -5,7 +5,7 @@
 
 -export([start_link/0, status/0, stop/0]).
 
--export([register/4, deregister/0]).
+-export([register/4, deregister/0, regular/0, increment/0]).
 
 -record(st, {ets}).
 -record(spec, {pid, max, min, dlta, mfa, tref, cur, cur_dlta}).
@@ -21,29 +21,36 @@ stop() ->
     gen_server:call(?MODULE, stop).
 
 register(Min, Max, Delta, Mfa) ->
-    Pid = self(),
-    gen_server:call(?MODULE, {register, #spec{pid=Pid, max=Max, min=Min, dlta=Delta, mfa=Mfa}}).
+    gen_server:call(?MODULE, {register, #spec{pid=self(), max=Max, min=Min, dlta=Delta, mfa=Mfa}}).
 
 deregister() ->
-    Pid = self(),
-    gen_server:call(?MODULE, {deregister, Pid}).
+    gen_server:call(?MODULE, {deregister, self()}).
+
+regular() ->
+    gen_server:call(?MODULE, {regular, self()}).
+
+increment() ->
+    gen_server:call(?MODULE, {increment, self()}).
+
 
 init([]) ->
     error_logger:info_msg("~p starting~n", [?MODULE]),
     {ok, #st{ets=ets:new(?MODULE, [set, private])}}.
 
-handle_call({register, #spec{pid=Pid}=Spec0}, _F, #st{ets=Ets}=St) ->
-    case backoff(Spec0) of
-        {ok, Spec} -> 
-            ets:insert(Ets, {Pid, Spec}), 
-            {reply, ok, St};
-        {error, Reason} ->
-            {reply, {error, Reason}, St}
-    end;
+handle_call({register, S}, _F, #st{ets=Ets}=St) ->
+    {reply, backoff(Ets, S, fun backoff/1), St};
+
 
 handle_call({deregister, Pid}, _F, #st{ets=Ets}=St) ->
     ets:delete(Ets, Pid),
     {reply, ok, St};
+
+handle_call({regular, Pid}, _F, #st{ets=Ets}=St) ->
+    {reply, backoff(Ets, Pid, fun backoff_normal/1), St};
+
+
+handle_call({increment, Pid}, _F, #st{ets=Ets}=St) ->
+    {reply, backoff(Ets, Pid, fun backoff_grow/1), St};
 
 handle_call(status, _F, St) ->
     {reply, {ok, alive}, St};
@@ -96,3 +103,21 @@ backoff_grow(#spec{cur=C, cur_dlta=D0, max=Max}=S) ->
 
 backoff_normal(#spec{min=Min, dlta=Delta}=S) ->
     backoff(S#spec{cur=Min, cur_dlta=Delta}).
+
+
+backoff(Ets, #spec{pid=Pid}=S0, Fun) ->
+    case Fun(S0) of
+        {ok, S} -> 
+            ets:insert(Ets, {Pid, S}), 
+            ok;
+        {error, Reason} ->
+            {error, Reason}
+    end;
+
+backoff(Ets, Pid, Fun) ->
+    case ets:lookup(Ets, Pid) of
+        [] ->
+            {error, not_registered};
+        [#spec{}=S] ->
+            backoff(Ets, S, Fun)
+    end.
