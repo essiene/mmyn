@@ -59,7 +59,7 @@ active(add_child, _From, #st{ets=Ets, count=Count}=St) ->
     case start_if_not_running(Ets, Count+1) of
         ok ->
             {reply, ok, active, St#st{count=Count+1}};
-        {error, _Reason} ->
+        {error, Reason} ->
             {reply, {error, Reason}, active, St}
     end.
 
