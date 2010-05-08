@@ -19,8 +19,15 @@ stop() ->
 
 
 init([]) ->
+    error_logger:info_msg("~p starting~n", [?MODULE]),
     {ok, #st{ets=ets:new(?MODULE, [set, private])}}.
 
+handle_call(status, _F, St) ->
+    {reply, {ok, alive}, St};
+
+handle_call(stop, _F, St) ->
+    error_logger:info_msg("~p stopping~n", [?MODULE]),
+    {stop, normal, ok, St};
 
 handle_call(R, _F, St) ->
     {reply, {error, {illegal_request, R}}, St}.
