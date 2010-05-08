@@ -1,0 +1,11 @@
+* nanny:add_rx() times out before it returns
+* Implement incremental backoff on idleness and accelerating
+  catchup on busy times for all repeatitive tasks
+* implement a pluggin framework in the rx module that allows the
+  rx to notify all registered callbacks, instead of just the one
+  callback.
+
+  In this framework, define an gen_sms behaviour that all plugins
+  will implement. This gen_sms behaviour module will also export
+  gen_sms:send(Src, Dst, Msg), which will use preconfigured defaults
+  for the plugin for the remaining #submit_sm{} parameters
