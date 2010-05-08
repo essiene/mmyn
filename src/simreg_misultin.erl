@@ -18,7 +18,7 @@ stop() ->
 init([]) ->
     {ok, Ip} = application:get_env(listen),
     {ok, Port} = application:get_env(port),
-    {ok, Backlog} = application:gen_env(listen_backlog),
+    {ok, Backlog} = application:get_env(listen_backlog),
 
 	process_flag(trap_exit, true),
 	misultin:start_link([{loop, fun handle_http/1}, {ip, Ip}, {port, Port}, {backlog, Backlog}]),
