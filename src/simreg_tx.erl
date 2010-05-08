@@ -12,39 +12,41 @@
         terminate/2,
         code_change/3]).
 
--export([start_link/0, start/0, stop/0, wake/0]).
+-export([start_link/1, start/1, stop/1, wake/1]).
 
 -define(WAIT_MAX, 360000).
 -define(WAIT_MIN, 100).
 -define(WAIT_GROW, 1000).
 -define(TXQ_CHK, txq_chk).
 
--record(st, {host, port, system_id, password, smpp, wait, wait_ref}).
+-record(st, {host, port, system_id, password, smpp, wait, wait_ref, id}).
 
-start_link() ->
-    gen_esme:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link(Id) ->
+    gen_esme:start_link(?MODULE, [Id], []).
 
-start() ->
-    gen_esme:start({local, ?MODULE}, ?MODULE, [], []).
+start(Id) ->
+    gen_esme:start(?MODULE, [Id], []).
 
-stop() ->
-    gen_esme:cast(?MODULE, stop).
+stop(Pid) ->
+    gen_esme:cast(Pid, stop).
 
-wake() ->
-    gen_esme:cast(?MODULE, wake).
+wake(Pid) ->
+    gen_esme:cast(Pid, wake).
 
-init([]) ->
+init([Id]) ->
     {Host, Port, SystemId, Password} = util:smsc_params(),
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
-            #st{host=Host, port=Port, system_id=SystemId, password=Password, wait=?WAIT_MIN}}.
+            #st{host=Host, port=Port, system_id=SystemId, password=Password,
+                wait=?WAIT_MIN, id=Id}}.
 
-handle_bind(Smpp, #st{}=St0) ->
+handle_bind(Smpp, #st{id=Id}=St0) ->
+    error_logger:info_msg("Transmitter ~p bound. Smpp: ~p~n", [Id, Smpp]),
     St1 = wait(St0),
     {noreply, St1#st{smpp=Smpp}}.
 
-handle_pdu(Pdu, St) ->
-    error_logger:info_msg("simreg_tx has received an unhandled pdu: ~p~n", [Pdu]),
+handle_pdu(Pdu, #st{id=Id}=St) ->
+    error_logger:info_msg("Transmitter ~p has received PDU: ~p~n", [Id, Pdu]),
     {noreply, St}.
     
 handle_unbind(_Pdu, St) ->
@@ -60,7 +62,8 @@ handle_cast(stop, St) ->
 handle_cast(_Req, St) ->
     {noreply, St}.
 
-handle_info(?TXQ_CHK, #st{smpp=Smpp}=St) ->
+handle_info(?TXQ_CHK, #st{smpp=Smpp, id=Id}=St) ->
+    error_logger:info_msg("Transmitter ~p is awake~n", [Id]),
     case txq:pop() of 
         '$empty' ->
             wait_grow(St);
@@ -78,11 +81,9 @@ terminate(_Reason, _St) ->
 code_change(_OldVsn, St, _Extra) ->
     {noreply, St}.
 
-wait(N) when is_integer(N) ->
-    error_logger:info_msg("Going to wake up in ~p ms~n", [N]),
-    timer:send_after(N, ?TXQ_CHK);
-wait(#st{wait=Wait, wait_ref=undefined}=St) ->
-    {ok, TRef} = wait(Wait),
+wait(#st{wait=N, wait_ref=undefined, id=Id}=St) ->
+    error_logger:info_msg("Transmitter ~p goint to sleep. Will awake in ~p ms~n", [Id, N]),
+    {ok, TRef} = timer:send_after(N, ?TXQ_CHK),
     St#st{wait_ref=TRef};
 wait(#st{wait_ref=TRef}=St) ->
     timer:cancel(TRef),
