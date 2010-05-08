@@ -7,9 +7,9 @@
 -export([idle/2, active/2]).
 -export([active/3]).
 
--export([start_link/0, add_child/0]).
+-export([start_link/0, add_child/0, babysit/0]).
 
--record(st, {ets, count=0}).
+-record(st, {ets, count=0, backoff}).
 
 
 start_link() ->
@@ -18,12 +18,21 @@ start_link() ->
 add_child() ->
     gen_fsm:sync_send_event(?MODULE, add_child).
 
+babysit() ->
+    gen_fsm:send_event(?MODULE, babysit).
+
 init([]) ->
     {ok, Count} = application:get_env(receivers),
+    {ok, {Min, Max, Delta}=BackOff} = application:get_env(rx_nanny_backoff),
+
     Tid = ets:new(nanny, [set, private]),
     tag_and_load(Tid, Count),
-    gen_fsm:send_event_after(1000, babysit),
-    {ok, idle, #st{ets=Tid}}.
+    case backoff:register(Min, Max, Delta, {?MODULE, babysit, []}) of
+        ok -> 
+            {ok, idle, #st{ets=Tid, backoff=BackOff}};
+        {error, Reason} ->
+            {stop, Reason}
+    end.
 
 handle_sync_event(R, _F, StName, St) ->
     {reply, {error, {illegal_request, R}}, StName, St}.
@@ -38,6 +47,7 @@ handle_info(_R, StName, St) ->
 
 
 terminate(_R, _StName, _St) ->
+    backoff:deregister(),
     ok.
 
 
@@ -70,10 +80,10 @@ babysit(#st{ets=Ets}=St) ->
     Count = start_all(Ets),
     case Count of
         0 -> 
-            gen_fsm:send_event_after(3000, babysit),
+            ok = backoff:regular(),
             {next_state, idle, St};
         N ->
-            gen_fsm:send_event_after(20000, babysit),
+            ok = backoff:increment(),
             {next_state, active, St#st{count=N}}
     end.
 
