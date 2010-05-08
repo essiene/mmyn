@@ -45,27 +45,30 @@ stop(_State) ->
 
 
 init([]) ->
-
-    RxSup = {rx_sup,
-        {rx_sup, start_link, []},
-        permanent, infinity, supervisor, [rx_sup]},
+    TxQ = {txq, 
+        {txq, start_link, []},
+        permanent, 5000, worker, [txq]},
 
     TxSup = {tx_sup,
         {tx_sup, start_link, []},
         permanent, infinity, supervisor, [tx_sup]},
 
-    TxQ = {txq, 
-        {txq, start_link, []},
-        permanent, 5000, worker, [txq]},
+    TxNanny = {tx_nanny,
+        {tx_nanny, start_link, []},
+        permanent, 5000, worker, [tx_nanny]},
 
-    Nanny = {nanny,
-        {nanny, start_link, []},
-        permanent, 5000, worker, [nanny]},
+    RxSup = {rx_sup,
+        {rx_sup, start_link, []},
+        permanent, infinity, supervisor, [rx_sup]},
+
+    RxNanny = {rx_nanny,
+        {rx_nanny, start_link, []},
+        permanent, 5000, worker, [rx_nanny]},
 
     Webservice = {simreg_misultin,
         {simreg_misultin, start_link, ["0.0.0.0", 11581, 30]},
         permanent, 5000, worker, [simreg_misultin]},
 
-    Processes = [RxSup, TxSup, TxQ, Nanny, Webservice],
+    Processes = [TxQ, TxSup, TxNanny, RxSup, RxNanny, Webservice],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.
