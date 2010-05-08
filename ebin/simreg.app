@@ -4,15 +4,15 @@
     {vsn, "1.0"}, 
     {modules, 
         [ 
-            txq, simreg_tx, simreg_rx, simreg_services,
-            nanny, simreg, simreg_rx_sup,
+            txq, tx, rx, simreg_services,
+            nanny, simreg, tx_sup, rx_sup,
             puk, reg, simreg_misultin, sms, simregctl,
             util
         ]
    },
 
   {registered, 
-      [simreg, txq, simreg_tx, simreg_rx_sup, nanny, simreg_misultin]
+      [simreg, txq, tx_sup, rx_sup, nanny, simreg_misultin]
   },
 
   {applications, 
