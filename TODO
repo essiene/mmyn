@@ -10,3 +10,17 @@
   for the plugin for the remaining #submit_sm{} parameters
 * Make use of erlcfg
 * Make use of log4erl?
+* add commands to simreg script via nodetool:
+    start/stop/status tx_nanny
+    start/stop/status rx_nanny
+    start/stop/status webservice
+    start/stop/status txq
+    add/remove/view sms alert list
+    send an sms
+    get statistics on webservice tps
+    get statistics on tx 
+    get statistics on rx tps
+
+* Pull out all other constants into config file
+
+    
