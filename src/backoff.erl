@@ -7,11 +7,12 @@
 
 -export([register/4, deregister/0, regular/0, increment/0]).
 
--record(st, {ets}).
+-record(st, {tbl}).
 -record(spec, {pid, max, min, dlta, mfa, tref, cur, cur_dlta}).
 
 
 start_link() ->
+    timer:start(),
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 status() ->
@@ -34,23 +35,35 @@ increment() ->
 
 
 init([]) ->
-    error_logger:info_msg("~p starting~n", [?MODULE]),
-    {ok, #st{ets=ets:new(?MODULE, [set, private])}}.
+    {ok, Filename} = application:get_env(backoff_store),
 
-handle_call({register, S}, _F, #st{ets=Ets}=St) ->
-    {reply, backoff(Ets, S, fun backoff/1), St};
+    case dets:open_file(?MODULE, [{file, Filename}, {keypos, 2}]) of
+        {ok, Tbl} -> 
+            error_logger:info_msg("~p started~n", [?MODULE]),
+            {ok, #st{tbl=Tbl}};
+        {error, Reason} ->
+            error_logger:info_msg("~p failed to start~n", [?MODULE]),
+            {stop, Reason}
+    end.
+
+handle_call({register, #spec{pid=Pid}=S}, _F, #st{tbl=Tbl}=St) ->
+    error_logger:info_msg("Recieved registration request from ~p~n", [Pid]),
+    {reply, backoff(Tbl, S, fun backoff/1), St};
 
 
-handle_call({deregister, Pid}, _F, #st{ets=Ets}=St) ->
-    ets:delete(Ets, Pid),
-    {reply, ok, St};
+handle_call({deregister, Pid}, _F, #st{tbl=Tbl}=St) ->
+    error_logger:info_msg("Recieved de-registration request from ~p~n", [Pid]),
+    dets:delete(Tbl, Pid),
+    {reply, dets:delete(Tbl, Pid), St};
 
-handle_call({regular, Pid}, _F, #st{ets=Ets}=St) ->
-    {reply, backoff(Ets, Pid, fun backoff_normal/1), St};
+handle_call({regular, Pid}, _F, #st{tbl=Tbl}=St) ->
+    error_logger:info_msg("Recieved regular-backoff request from ~p~n", [Pid]),
+    {reply, backoff(Tbl, Pid, fun backoff_normal/1), St};
 
 
-handle_call({increment, Pid}, _F, #st{ets=Ets}=St) ->
-    {reply, backoff(Ets, Pid, fun backoff_grow/1), St};
+handle_call({increment, Pid}, _F, #st{tbl=Tbl}=St) ->
+    error_logger:info_msg("Recieved incremental-backoff request from ~p~n", [Pid]),
+    {reply, backoff(Tbl, Pid, fun backoff_grow/1), St};
 
 handle_call(status, _F, St) ->
     {reply, {ok, alive}, St};
@@ -79,20 +92,31 @@ code_change(_OldVsn, St, _Extra) ->
     {ok, St}.
 
 
-backoff(#spec{cur=N, tref=undefined, mfa={M, F, A}}=S) ->
+backoff(#spec{pid=Pid, cur=undefined, dlta=D, min=N}=S) ->
+    error_logger:info_msg("Initialized timer for ~p~n", [Pid]),
+    backoff(S#spec{cur=N, cur_dlta=D});
+
+
+backoff(#spec{pid=Pid, cur=N, tref=undefined, mfa={M, F, A}}=S) ->
+    error_logger:info_msg("Going to create timer for ~p with params: [~p,~p,~p,~p]~n", [Pid, N, M, F, A]),
     case timer:apply_after(N, M, F, A) of
         {ok, TRef} -> 
+            error_logger:info_msg("Created timer for ~p~n", [Pid]),
             {ok, S#spec{tref=TRef}};
         {error, Reason} ->
+            error_logger:info_msg("Failed to create timer for ~p. Reason: ~p~n", [Pid, Reason]),
             {error, Reason}
     end;
 
-backoff(#spec{tref=TRef}=S) ->
+backoff(#spec{pid=Pid, tref=TRef}=S) ->
     timer:cancel(TRef),
+    error_logger:info_msg("Cancelled timer for ~p~n", [Pid]),
     backoff(S#spec{tref=undefined}).
 
 
-backoff_grow(#spec{cur=C, cur_dlta=D0, max=Max}=S) ->
+
+backoff_grow(#spec{cur=C, cur_dlta=D0, max=Max, pid=Pid}=S) ->
+    error_logger:info_msg("Incrementing timer for ~p: [~p, ~p, ~p]~n", [Pid, C, D0, Max]),
     D = D0*2,
     case C + D of
         N when N < Max ->
@@ -105,19 +129,19 @@ backoff_normal(#spec{min=Min, dlta=Delta}=S) ->
     backoff(S#spec{cur=Min, cur_dlta=Delta}).
 
 
-backoff(Ets, #spec{pid=Pid}=S0, Fun) ->
+backoff(Tbl, #spec{}=S0, Fun) ->
     case Fun(S0) of
         {ok, S} -> 
-            ets:insert(Ets, {Pid, S}), 
+            dets:insert(Tbl, S), 
             ok;
         {error, Reason} ->
             {error, Reason}
     end;
 
-backoff(Ets, Pid, Fun) ->
-    case ets:lookup(Ets, Pid) of
+backoff(Tbl, Pid, Fun) ->
+    case dets:lookup(Tbl, Pid) of
         [] ->
             {error, not_registered};
         [#spec{}=S] ->
-            backoff(Ets, S, Fun)
+            backoff(Tbl, S, Fun)
     end.
