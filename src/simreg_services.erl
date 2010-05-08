@@ -39,7 +39,7 @@ handle_sms(Src, "789", ["reg" , Msisdn0 | _Rest]) ->
     Msisdn1 = msisdn_strip(Msisdn0, 5),
     Msisdn = string:concat("234", Msisdn1),
 
-    case regstatus:get(Msisdn) of
+    case reg:get(Msisdn) of
         #soap_response{status=0}=R ->
             Msg = string:concat(Msisdn, " is fully registered on the MTNN network"),
             util:sms_response(Src, R#soap_response{message=Msg});
@@ -51,7 +51,7 @@ handle_sms(Src, "789", ["reg" , Msisdn0 | _Rest]) ->
     end;
 
 handle_sms(Src, "789", ["reg" | _Rest]) ->
-    case regstatus:get(Src) of
+    case reg:get(Src) of
         #soap_response{status=0}=R ->
             Msg = "Your SIM is fully registered on the MTNN network",
             util:sms_response(Src, R#soap_response{message=Msg});
