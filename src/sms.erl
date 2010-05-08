@@ -1,7 +1,7 @@
 -module(sms).
 -include("simreg.hrl").
 
--export([send/2]).
+-export([send/2, send/3]).
 
 -record(req, {status=55, msisdn, message, flag}).
 
@@ -22,6 +22,9 @@ send(Src, Xml) ->
         _Any:Message ->
             #soap_response{status=505, message=Message}
     end.
+
+send(Src, Dst, Msg) ->
+    txq:push(#txq_req{src=Src, dst=Dst, message=Msg}).
 
 
 parse(Xml) ->
