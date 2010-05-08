@@ -23,7 +23,7 @@ msisdn_strip(Msisdn, _) ->
     binary_to_list(Msisdn).
 
 handle_sms(Src, "789", ["-mmyn#vsn" | _Rest]) ->
-    simreg_tx:sendsms("mmyn", Src, "eng: Mmayen\nvsn: 1.0\nos: Solaris 10");
+    sms:send("mmyn", Src, "eng: Mmayen\nvsn: 1.0\nos: Solaris 10");
 
 handle_sms(Src, "789", ["help" | _Rest]) ->
     util:sms_response(Src, "help) Menu\npuk) Get puk\nreg)Get status");

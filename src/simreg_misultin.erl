@@ -76,7 +76,7 @@ get(["send"], Req) ->
     {"to", Dst} = proplists:lookup("to", QueryString),
     {"msg", Msg} = proplists:lookup("msg", QueryString),
 
-    ok = txq:push(#txq_req{src="SimReg", dst=Dst, message=Msg}),
+    ok = sms:send("SimReg", Dst, Msg),
 
     Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n");
 

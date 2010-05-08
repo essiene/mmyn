@@ -10,7 +10,7 @@
 send(Src, Xml) ->
     try parse(Xml) of
         #req{status=0, msisdn=Msisdn, message=Message} ->
-            txq:push(#txq_req{src=Src, dst=Msisdn, message=Message}),
+            send(Src, Msisdn, Message),
             #soap_response{status=0, message="Accepted for delivery"};
         #req{status=N, msisdn=undefined} ->
             #soap_response{status=N, message="MSISDN unspecified"};

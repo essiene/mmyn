@@ -23,21 +23,21 @@ soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
     end.
 
 sms_response(Dest, #soap_response{message=undefined}) ->
-    simreg_tx:sendsms(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
-    simreg_tx:sendsms(?SMS_ERR_SRC, ?NOTIFY_MSISDN, "Unable to get response");
+    sms:send(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
+    sms:send(?SMS_ERR_SRC, ?NOTIFY_MSISDN, "Unable to get response");
 
 sms_response(Dest, #soap_response{status=0, message=Msg}) ->
-    simreg_tx:sendsms(?SMS_SRC, Dest, Msg);
+    sms:send(?SMS_SRC, Dest, Msg);
 
 sms_response(Dest, #soap_response{status=100, op=reg, message=Msg}) ->
-    simreg_tx:sendsms(?SMS_SRC, Dest, Msg);
+    sms:send(?SMS_SRC, Dest, Msg);
 
 sms_response(Dest, #soap_response{status=_N, message=Msg}) ->
-    simreg_tx:sendsms(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
-    simreg_tx:sendsms(?SMS_ERR_SRC, ?NOTIFY_MSISDN, Msg);
+    sms:send(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
+    sms:send(?SMS_ERR_SRC, ?NOTIFY_MSISDN, Msg);
 
 sms_response(Dest, Msg) ->
-    simreg_tx:sendsms(?SMS_SRC, Dest, Msg).
+    sms:send(?SMS_SRC, Dest, Msg).
     
 smsc_params() -> 
     {ok, Host} = application:get_env(smsc_host), 
