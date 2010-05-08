@@ -1,29 +1,29 @@
--module(nanny).
+-module(rx_nanny).
 -behaviour(gen_fsm).
 -export([init/1,handle_sync_event/4,
         handle_event/3,handle_info/3,
         terminate/3,code_change/4]).
 
--export([idle/2, active_rx/2]).
--export([active_rx/3]).
+-export([idle/2, active/2]).
+-export([active/3]).
 
--export([start_link/0, add_rx/0]).
+-export([start_link/0, add_child/0]).
 
--record(st, {rx, rx_count=0}).
+-record(st, {ets, count=0}).
 
 
 start_link() ->
     gen_fsm:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-add_rx() ->
-    gen_fsm:sync_send_event(?MODULE, add_rx).
+add_child() ->
+    gen_fsm:sync_send_event(?MODULE, add_child).
 
 init([]) ->
-    {ok, Count} = application:get_env(rx_count),
+    {ok, Count} = application:get_env(receivers),
     Tid = ets:new(nanny, [set, private]),
     tag_and_load(Tid, Count),
     gen_fsm:send_event_after(1000, babysit),
-    {ok, idle, #st{rx=Tid}}.
+    {ok, idle, #st{ets=Tid}}.
 
 handle_sync_event(R, _F, StName, St) ->
     {reply, {error, {illegal_request, R}}, StName, St}.
@@ -50,23 +50,23 @@ code_change(_OldVsn, StName, St, _Extra) ->
 idle(babysit, St) ->
     babysit(St).
 
-active_rx(babysit, St) ->
+active(babysit, St) ->
     babysit(St).
 
 % StateName/3
 
-active_rx(add_rx, _From, #st{rx=Ets, rx_count=Count}=St) ->
+active(add_child, _From, #st{ets=Ets, count=Count}=St) ->
     case start_if_not_running(Ets, Count+1) of
         ok ->
-            {reply, ok, active_rx, St#st{rx_count=Count+1}};
+            {reply, ok, active, St#st{count=Count+1}};
         {error, _Reason} ->
-            {reply, {error, Reason}, active_rx, St}
+            {reply, {error, Reason}, active, St}
     end.
 
 
 % Privates
 
-babysit(#st{rx=Ets}=St) ->
+babysit(#st{ets=Ets}=St) ->
     Count = start_all(Ets),
     case Count of
         0 -> 
@@ -74,7 +74,7 @@ babysit(#st{rx=Ets}=St) ->
             {next_state, idle, St};
         N ->
             gen_fsm:send_event_after(20000, babysit),
-            {next_state, active_rx, St#st{rx_count=N}}
+            {next_state, active, St#st{count=N}}
     end.
 
 
