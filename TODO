@@ -1,4 +1,3 @@
-* nanny:add_rx() times out before it returns
 * Implement incremental backoff on idleness and accelerating
   catchup on busy times for all repeatitive tasks
 * implement a pluggin framework in the rx module that allows the

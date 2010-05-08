@@ -58,9 +58,9 @@ active_rx(babysit, St) ->
 active_rx(add_rx, _From, #st{rx=Ets, rx_count=Count}=St) ->
     case start_if_not_running(Ets, Count+1) of
         ok ->
-            {next_state, active_rx, St#st{rx_count=Count+1}};
+            {reply, ok, active_rx, St#st{rx_count=Count+1}};
         {error, _Reason} ->
-            {next_state, active_rx, St}
+            {reply, {error, Reason}, active_rx, St}
     end.
 
 
