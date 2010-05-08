@@ -1,4 +1,4 @@
--module(tx).
+-module(esmetx).
 -include("simreg.hrl").
 -behaviour(gen_esme).
 

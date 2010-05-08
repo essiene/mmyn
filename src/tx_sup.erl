@@ -46,9 +46,9 @@ start_child(Id) ->
 %% @doc supervisor callback.
 init([]) ->
 
-    Tx = {tx, 
-        {tx, start_link, []},
-        transient, 5000, worker, [tx]},
+    Tx = {esmetx, 
+        {esmetx, start_link, []},
+        transient, 5000, worker, [esmetx]},
 
     Processes = [Tx],
 

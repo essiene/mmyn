@@ -4,8 +4,8 @@
     {vsn, "1.0"}, 
     {modules, 
         [ 
-            txq, tx_sup, tx_nanny, tx, 
-            rx_sup, rx_nanny, rx, 
+            txq, tx_sup, tx_nanny, esmetx, 
+            rx_sup, rx_nanny, esmerx, 
             simreg_misultin, simreg,
             puk, reg, sms, simreg_services,
             simregctl, util
