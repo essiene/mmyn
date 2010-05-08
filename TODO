@@ -1,5 +1,3 @@
-* Implement incremental backoff on idleness and accelerating
-  catchup on busy times for all repeatitive tasks
 * implement a pluggin framework in the rx module that allows the
   rx to notify all registered callbacks, instead of just the one
   callback.
@@ -22,5 +20,6 @@
     get statistics on rx tps
 
 * Pull out all other constants into config file
-
-    
+* Stopping the application does not clean-up the esme's properly :(
+* backoff DETS garbage collection
+* When nanny goes down, take down your kids dammit!!!
