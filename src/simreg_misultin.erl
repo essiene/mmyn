@@ -4,18 +4,22 @@
 -include("simreg.hrl").
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
--export([start_link/3, stop/0]).
+-export([start_link/0, stop/0]).
 -export([get/2,post/2,put/2,delete/2, get_value/2]).
 -export([handle_http/1]).
 
 
-start_link(Ip, Port, Backlog) ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, [Ip, Port, Backlog], []).
+start_link() ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 stop() ->
 	gen_server:cast(?MODULE, stop).
 
-init([Ip, Port, Backlog]) ->
+init([]) ->
+    {ok, Ip} = application:get_env(listen),
+    {ok, Port} = application:get_env(port),
+    {ok, Backlog} = application:gen_env(listen_backlog),
+
 	process_flag(trap_exit, true),
 	misultin:start_link([{loop, fun handle_http/1}, {ip, Ip}, {port, Port}, {backlog, Backlog}]),
 	erlang:monitor(process, misultin),

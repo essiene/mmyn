@@ -66,7 +66,7 @@ init([]) ->
         permanent, 5000, worker, [rx_nanny]},
 
     Webservice = {simreg_misultin,
-        {simreg_misultin, start_link, ["0.0.0.0", 11581, 30]},
+        {simreg_misultin, start_link, []},
         permanent, 5000, worker, [simreg_misultin]},
 
     Processes = [TxQ, TxSup, TxNanny, RxSup, RxNanny, Webservice],
