@@ -12,14 +12,14 @@
         terminate/2,
         code_change/3]).
 
--export([start_link/1, start/1, stop/1, wake/1]).
+-export([start_link/1, start/1, stop/1, wake/1, check_and_send/1]).
 
 -define(BK_OFF_MAX, 360000).
 -define(BK_OFF_MIN, 100).
 -define(BK_OFF_GROW, 1000).
 -define(TXQ_CHK, txq_chk).
 
--record(st, {host, port, system_id, password, smpp, backoff, backoff_ref, id}).
+-record(st, {host, port, system_id, password, smpp, id, esmetx_backoff}).
 
 start_link(Id) ->
     gen_esme:start_link(?MODULE, [Id], []).
@@ -33,20 +33,25 @@ stop(Pid) ->
 wake(Pid) ->
     gen_esme:cast(Pid, wake).
 
+check_and_send(Pid) ->
+    gen_esme:cast(Pid, check_and_send).
+
 init([Id]) ->
     {Host, Port, SystemId, Password} = util:smsc_params(),
+    {ok, Backoff} = application:get_env(esmetx_backoff),
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
             #st{host=Host, port=Port, system_id=SystemId, password=Password,
-                backoff=?BK_OFF_MIN, id=Id}}.
+                id=Id, esmetx_backoff=Backoff}}.
 
-handle_bind(Smpp, #st{id=Id}=St0) ->
-    error_logger:info_msg("Transmitter ~p bound. Smpp: ~p~n", [Id, Smpp]),
-    St1 = backoff(St0),
-    {noreply, St1#st{smpp=Smpp}}.
+handle_bind(Smpp, #st{id=Id, esmetx_backoff={Min, Max, Delta}}=St) ->
+    error_logger:info_msg("[~p] Transmitter ~p bound~n", [self(), Id]),
+    ok = backoff:register(Min, Max, Delta, {?MODULE, check_and_send, [self()]}),
+    error_logger:info_msg("[~p] Transmitter ~p registered with backoff~n", [self(), Id]),
+    {noreply, St#st{smpp=Smpp}}.
 
 handle_pdu(Pdu, #st{id=Id}=St) ->
-    error_logger:info_msg("Transmitter ~p has received PDU: ~p~n", [Id, Pdu]),
+    error_logger:info_msg("[~p] Transmitter ~p has received PDU: ~p~n", [self(), Id, Pdu]),
     {noreply, St}.
     
 handle_unbind(_Pdu, St) ->
@@ -56,21 +61,28 @@ handle_call(Req, _From, St) ->
     {reply, {error, Req}, St}.
 
 handle_cast(wake, St) ->
-    backoff_normal(St);
-handle_cast(stop, St) ->
-    {stop, normal, St};
-handle_cast(_Req, St) ->
-    {noreply, St}.
+    ok = backoff:regular(),
+    {noreply, St};
 
-handle_info(?TXQ_CHK, #st{smpp=Smpp, id=Id}=St) ->
-    error_logger:info_msg("Transmitter ~p is awake~n", [Id]),
+handle_cast(stop, #st{id=Id}=St) ->
+    backoff:deregister(),
+    error_logger:info_msg("[~p] Transmitter ~p deregistered from backoff~n", [self(), Id]),
+    {stop, normal, St};
+
+handle_cast(check_and_send, #st{smpp=Smpp, id=Id}=St) ->
     case txq:pop() of 
         '$empty' ->
-            backoff_grow(St);
+            error_logger:info_msg("[~p] Transmitter ~p found no tx req to send~n", [self(), Id]),
+            ok = backoff:increment();
         #txq_req{src=Src, dst=Dest, message=Msg} ->
             smpp:send(Smpp, #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}),
-            backoff_normal(St)
-    end;
+            error_logger:info_msg("[~p] Transmitter ~p has sent tx req~n", [self(), Id]),
+            ok = backoff:regular()
+    end,
+    {noreply, St};
+
+handle_cast(_Req, St) ->
+    {noreply, St}.
 
 handle_info(_Req, St) ->
     {noreply, St}.
@@ -80,23 +92,3 @@ terminate(_Reason, _St) ->
 
 code_change(_OldVsn, St, _Extra) ->
     {noreply, St}.
-
-backoff(#st{backoff=N, backoff_ref=undefined, id=Id}=St) ->
-    error_logger:info_msg("Transmitter ~p goint to sleep. Will awake in ~p ms~n", [Id, N]),
-    {ok, TRef} = timer:send_after(N, ?TXQ_CHK),
-    St#st{backoff_ref=TRef};
-backoff(#st{backoff_ref=TRef}=St) ->
-    timer:cancel(TRef),
-    backoff(St#st{backoff_ref=undefined}).
-
-
-backoff_grow(#st{backoff=BkOff}=St) ->
-    case BkOff + ?BK_OFF_GROW of
-        N when N < ?BK_OFF_MAX ->
-            {noreply, backoff(St#st{backoff=N})};
-        _ ->
-            {noreply, backoff(St#st{backoff=?BK_OFF_MAX})}
-    end.
-
-backoff_normal(St) ->
-    {noreply, backoff(St#st{backoff=?BK_OFF_MIN})}.
