@@ -24,7 +24,8 @@ send(Src, Xml) ->
     end.
 
 send(Src, Dst, Msg) ->
-    txq:push(#txq_req{src=Src, dst=Dst, message=Msg}).
+    txq:push(#txq_req{src=Src, dst=Dst, message=Msg}),
+    tx_nanny:wake_all().
 
 
 parse(Xml) ->
