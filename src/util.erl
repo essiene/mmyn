@@ -32,9 +32,10 @@ sms_response(Dest, #soap_response{status=0, message=Msg}) ->
 sms_response(Dest, #soap_response{status=100, op=reg, message=Msg}) ->
     sms:send(?SMS_SRC, Dest, Msg);
 
-sms_response(Dest, #soap_response{status=_N, message=Msg}) ->
+sms_response(Dest, #soap_response{status=N, message=Msg}) ->
     sms:send(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
-    sms:send(?SMS_ERR_SRC, ?NOTIFY_MSISDN, Msg);
+    Msg1 = lists:flatten(iolib:format("~p~n~p", [N, Msg])),
+    sms:send(?SMS_ERR_SRC, ?NOTIFY_MSISDN, Msg1);
 
 sms_response(Dest, Msg) ->
     sms:send(?SMS_SRC, Dest, Msg).
