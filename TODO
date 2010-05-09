@@ -41,3 +41,33 @@
 * When the tx_nanny wakes its kids, it should take note of the time interval
   and if it receives another wake_all() message, should ignore till a treshold
   value has been exceeded
+
+
+* Proposal for esmerx logging. Also some more ideas:
+     -> Node|Tid|Tstmp | RxId|RxPid | Src|Dst|ShortMessage | Callback|
+     <- Node|Tid|Tstmp | Status
+
+     The callback modules should expose:
+        Callback:init(...) -> will be called by esmerx in handle_bind()
+        Callback:terminate/2 -> will be called when esmerx is going down.
+        Callback:handle_sms(...) -> {noreply, {StatusCode, StatusMessage, Extra}, State}
+                                  | {reply, ShortMsg, {StatusCode, StatusMessage, Extra}, State}
+                                  | {late_reply, Ref, State}
+
+    esmerx would then implement a routing table:
+        {Dst, SEPARATOR} -> Callback |
+        {{Dst, Src}, SEPARATOR} -> Callback
+        {{Dst, Src, [H0,H1,...,Hn|R]}, SEPARATOR} -> Callback
+
+    Also, we would have URL schemes for the various Callback types, e.g.:
+        {erlang, Modulename}
+        {http, http://foo..areas/, get, json}
+        {http, http://.../, post, xml}
+
+* Support global configs for all tx/rx and per instance configuration
+  overriding, this would allow, different one application to use say multiple
+  smsc accounts for proper load-balancing, etc.
+
+  Also, extend this to support virtual instances, which would basically be like
+  the entire application with its own seperate configuration, running still
+  inside one vm instance.
