@@ -37,3 +37,7 @@
 
     For these, make them different from the actual business logic optional
     logging
+
+* When the tx_nanny wakes its kids, it should take note of the time interval
+  and if it receives another wake_all() message, should ignore till a treshold
+  value has been exceeded
