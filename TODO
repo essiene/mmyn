@@ -30,3 +30,10 @@
   dynamic registration, so a client can register if its not already 
   registered and see if its possible to also let a backoff module
   discover clients who want its services... 
+
+* Log and track:
+    webservice transactions 
+    esmerx transactions
+
+    For these, make them different from the actual business logic optional
+    logging
