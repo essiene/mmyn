@@ -25,6 +25,8 @@ wake_all() ->
     gen_fsm:send_event(?MODULE, wake).
 
 init([]) ->
+    process_flag(trap_exit, true),
+
     {ok, Count} = application:get_env(transmitters),
     {ok, {Min, Max, Delta}=BackOff} = application:get_env(tx_nanny_backoff),
 
@@ -49,8 +51,10 @@ handle_info(_R, StName, St) ->
     {next_state, StName, St}.
 
 
-terminate(_R, _StName, _St) ->
+terminate(_R, _StName, St) ->
+    error_logger:info_msg("~p is going down~n", [?MODULE]),
     backoff:deregister(),
+    stop(St),
     ok.
 
 
@@ -126,6 +130,28 @@ wake(#st{ets=Ets}=St, Id0) ->
     Id = ets:next(Ets, Id0),
     wake(St, Id).
 
+stop(#st{ets=Ets}=St) ->
+    Id = ets:first(Ets),
+    stop(St, Id).
+
+stop(_, '$end_of_table') ->
+    ok;
+stop(#st{ets=Ets}=St, Id0) ->
+    case ets:lookup(Ets, Id0) of
+        [] ->
+            ok;
+        [{Id0, undefined}] ->
+            ok;
+        [{Id0, Pid}] when is_pid(Pid) ->
+            case is_process_alive(Pid) of
+                false -> 
+                    ok;
+                true -> 
+                    esmetx:stop(Pid)
+            end
+    end,
+    Id = ets:next(Ets, Id0),
+    stop(St, Id).
 
 
 start_all(Ets) ->
