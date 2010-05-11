@@ -66,7 +66,7 @@ handle_cast(wake, St) ->
 
 handle_cast(stop, #st{id=Id}=St) ->
     backoff:deregister(),
-    error_logger:info_msg("[~p] Transmitter ~p deregistered from backoff~n", [self(), Id]),
+    error_logger:info_msg("[~p] Transmitter ~p has deregistered from backoff~n", [self(), Id]),
     {stop, normal, St};
 
 handle_cast(check_and_send, #st{smpp=Smpp, id=Id}=St) ->
@@ -84,10 +84,12 @@ handle_cast(check_and_send, #st{smpp=Smpp, id=Id}=St) ->
 handle_cast(_Req, St) ->
     {noreply, St}.
 
-handle_info(_Req, St) ->
+handle_info(Req, #st{id=Id}=St) ->
+    error_logger:info_msg("[~p] Transmitter ~p has recieved a non gen_server request: ~p", [self(), Id, Req]),
     {noreply, St}.
 
-terminate(_Reason, _St) ->
+terminate(Reason, #st{id=Id}) ->
+    error_logger:info_msg("[~p] Transmitter ~p is terminating with reason: ~p~n", [self(), Id, Reason]),
     ok.
 
 code_change(_OldVsn, St, _Extra) ->

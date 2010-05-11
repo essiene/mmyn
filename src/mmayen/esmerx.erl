@@ -33,17 +33,17 @@ init([Callback, Id]) ->
                 callback=Callback, id=Id}}.
 
 handle_bind(Smpp, #st{id=Id}=St) ->
-    error_logger:info_msg("Receiver ~p bound. Smpp: ~p~n", [Id, Smpp]),
+    error_logger:info_msg("[~p] Receiver ~p bound~n", [self(), Id]),
     {noreply, St#st{smpp=Smpp}}.
 
 handle_pdu(#pdu{body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_message=Msg}}=Pdu, #st{callback=Callback, id=Id}=St) ->
-    error_logger:info_msg("Receiver ~p received PDU: ~p~n", [Id, Pdu]),
+    error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
     {ok, WordList} = preprocess(Msg),
     Callback:handle_sms(Src, Dst, WordList),
     {noreply, St};
 
 handle_pdu(Pdu, #st{id=Id}=St) ->
-    error_logger:info_msg("Receiver ~p received PDU: ~p~n", [Id, Pdu]),
+    error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
     {noreply, St}.
     
 handle_unbind(_Pdu, St) ->
@@ -61,11 +61,11 @@ handle_cast(_Req, St) ->
     {noreply, St}.
 
 handle_info(Req, #st{id=Id}=St) ->
-    error_logger:info_msg("Receiver ~p recieved non gen_server request: ~p", [Id, Req]),
+    error_logger:info_msg("[~p] Receiver ~p has recieved a non gen_server request: ~p", [self(), Id, Req]),
     {noreply, St}.
 
 terminate(Reason, #st{id=Id}) ->
-    error_logger:info_msg("Receiver ~p is terminating with reason: ~p~n", [Id, Reason]),
+    error_logger:info_msg("[~p] Receiver ~p is terminating with reason: ~p~n", [self(), Id, Reason]),
     ok.
 
 code_change(_OldVsn, St, _Extra) ->
