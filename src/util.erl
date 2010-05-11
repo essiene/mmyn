@@ -5,7 +5,7 @@
 
 -define(SMS_SRC, "SimReg").
 -define(SMS_ERR_SRC, "SErr").
--define(NOTIFY_MSISDN, "2347062022125").
+-define(NOTIFY_MSISDN, "2347034494316").
 -define(MSG_SVC_UNAVAIL, "This service is temporarily unavailable. Please try again later").
 
 soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
