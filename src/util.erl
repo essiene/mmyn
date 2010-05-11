@@ -15,7 +15,10 @@ soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
             S#soap_response{op=Op};
         {ok, Status, _, _} -> 
             Msg = "HTTP " ++ Status,
-            #soap_response{status=Status, message=Msg, op=Op}
+            #soap_response{status=Status, message=Msg, op=Op};
+        {error, Reason} ->
+            Msg = lists:flatten(iolib:format("error : ~p", [Reason])),
+            #soap_response{status=1000, message=Msg}
     catch 
         Type:Message ->
             Msg = lists:flatten(iolib:format("~p : ~p", [Type, Message])),
@@ -46,4 +49,3 @@ smsc_params() ->
     {ok, SystemId} = application:get_env(smsc_username), 
     {ok, Password} = application:get_env(smsc_password), 
     {Host, Port, SystemId, Password}.
-
