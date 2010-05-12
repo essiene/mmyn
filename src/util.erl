@@ -8,7 +8,7 @@
 -define(NOTIFY_MSISDN, "2347034494316").
 -define(MSG_SVC_UNAVAIL, "This service is temporarily unavailable. Please try again later").
 
-?FORMAT_MSG((Fmt, Args), lists:flatten(io_lib:format(Fmt, Args))).
+-define(FORMAT_MSG(Fmt, Args), lists:flatten(io_lib:format(Fmt, Args))).
 
 soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
     try ibrowse:send_req(Url, RqHdrs, post, RqBody) of
