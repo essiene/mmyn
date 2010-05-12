@@ -25,7 +25,13 @@ register(Min, Max, Delta, Mfa) ->
     gen_server:call(?MODULE, {register, #spec{pid=self(), max=Max, min=Min, dlta=Delta, mfa=Mfa}}).
 
 deregister() ->
-    gen_server:call(?MODULE, {deregister, self()}).
+    try gen_server:call(?MODULE, {deregister, self()}) 
+    catch 
+        exit: {noproc, {gen_server, call, [?MODULE, {deregister, _Pid}]}} -> 
+            ok;
+        exit: {shutdown, {gen_server, call, [?MODULE, {deregister, _Pid}]}} -> 
+            ok
+    end.
 
 regular() ->
     gen_server:call(?MODULE, {regular, self()}).
