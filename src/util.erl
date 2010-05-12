@@ -8,6 +8,8 @@
 -define(NOTIFY_MSISDN, "2347034494316").
 -define(MSG_SVC_UNAVAIL, "This service is temporarily unavailable. Please try again later").
 
+?FORMAT_MSG((Fmt, Args), lists:flatten(io_lib:format(Fmt, Args))).
+
 soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
     try ibrowse:send_req(Url, RqHdrs, post, RqBody) of
         {ok, "200", _, RsBody} -> 
@@ -17,11 +19,11 @@ soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
             Msg = "HTTP " ++ Status,
             #soap_response{status=Status, message=Msg, op=Op};
         {error, Reason} ->
-            Msg = lists:flatten(iolib:format("error : ~p", [Reason])),
+            Msg = ?FORMAT_MSG("error: ~p", [Reason]),
             #soap_response{status=1000, message=Msg}
     catch 
         Type:Message ->
-            Msg = lists:flatten(iolib:format("~p : ~p", [Type, Message])),
+            Msg = ?FORMAT_MSG("~p : ~p", [Type, Message]),
             #soap_response{status=1000, message=Msg, op=Op}
     end.
 
@@ -37,7 +39,7 @@ sms_response(Dest, #soap_response{status=100, op=reg, message=Msg}) ->
 
 sms_response(Dest, #soap_response{status=N, message=Msg}) ->
     sms:send(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
-    Msg1 = lists:flatten(iolib:format("~p~n~p", [N, Msg])),
+    Msg1 = ?FORMAT_MSG("~p~n~p", [N, Msg]),
     sms:send(?SMS_ERR_SRC, ?NOTIFY_MSISDN, Msg1);
 
 sms_response(Dest, Msg) ->
