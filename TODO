@@ -71,3 +71,10 @@
   Also, extend this to support virtual instances, which would basically be like
   the entire application with its own seperate configuration, running still
   inside one vm instance.
+
+* Start employing erlang:monitor/2 across board to handle garbage collection of
+  dead/dying procs:
+    * backoff needs to deregister its dying clients
+    * nanny's need to deregister their dying kids so when the new ones
+      come back, they can replace them cleanly.
+    * other such shenanigans :)
