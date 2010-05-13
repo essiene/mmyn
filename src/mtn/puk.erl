@@ -24,7 +24,7 @@ get(Msisdn) ->
                     </soapenv:Body> 
                 </soapenv:Envelope>"),
 
-    Url = application:get_env(soap_url_puk),
+    {ok, Url} = application:get_env(soap_url_puk),
     util:soap_request(Url, [
             {"Accept-Encoding", "identity"},
             {"Soapaction", ""},
