@@ -48,7 +48,7 @@ init([]) ->
             error_logger:info_msg("~p started~n", [?MODULE]),
             {ok, #st{tbl=Tbl}};
         {error, Reason} ->
-            error_logger:info_msg("~p failed to start~n", [?MODULE]),
+            error_logger:info_msg("~p failed to start for reason ~p~n", [?MODULE, Reason]),
             {stop, Reason}
     end.
 
