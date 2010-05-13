@@ -1,4 +1,4 @@
--module(tx_nanny).
+-module(nanny).
 -behaviour(gen_fsm).
 -export([init/1,handle_sync_event/4,
         handle_event/3,handle_info/3,
@@ -7,34 +7,34 @@
 -export([idle/2, active/2]).
 -export([active/3]).
 
--export([start_link/0, add_child/0, babysit/0, wake_all/0]).
+-export([start_link/5, add_child/1, babysit_all/1, wake_all/1]).
 
--record(st, {ets, count=0, backoff}).
+-record(st, {ets, count=0, backoff, id, start_mf, stop_mf, wake_mf}).
 
 
-start_link() ->
-    gen_fsm:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link(Id, Env, StartMf, StopMf, WakeMf) ->
+    gen_fsm:start_link({local, Id}, ?MODULE, [Id, Env, StartMf, StopMf, WakeMf], []).
 
-add_child() ->
-    gen_fsm:sync_send_event(?MODULE, add_child).
+add_child(Id) ->
+    gen_fsm:sync_send_event(Id, add_child).
 
-babysit() ->
-    gen_fsm:send_event(?MODULE, babysit).
+babysit_all(Id) ->
+    gen_fsm:send_event(Id, babysit).
 
-wake_all() ->
-    gen_fsm:send_event(?MODULE, wake).
+wake_all(Id) ->
+    gen_fsm:send_event(Id, wake).
 
-init([]) ->
+init([Id, {EnvChildren, EnvBackoff}, StartMf, StopMf, WakeMf]) ->
     process_flag(trap_exit, true),
 
-    {ok, Count} = application:get_env(transmitters),
-    {ok, {Min, Max, Delta}=BackOff} = application:get_env(tx_nanny_backoff),
+    {ok, Count} = application:get_env(EnvChildren),
+    {ok, {Min, Max, Delta}=BackOff} = application:get_env(EnvBackoff),
 
-    Tid = ets:new(nanny, [set, private]),
+    Tid = ets:new(Id, [set, private]),
     tag_and_load(Tid, Count),
-    case backoff:register(Min, Max, Delta, {?MODULE, babysit, []}) of
+    case backoff:register(Min, Max, Delta, {?MODULE, babysit_all, [Id]}) of
         ok -> 
-            {ok, idle, #st{ets=Tid, backoff=BackOff}};
+            {ok, idle, #st{ets=Tid, backoff=BackOff, id=Id, start_mf=StartMf, stop_mf=StopMf, wake_mf=WakeMf}};
         {error, Reason} ->
             {stop, Reason}
     end.
@@ -51,8 +51,8 @@ handle_info(_R, StName, St) ->
     {next_state, StName, St}.
 
 
-terminate(_R, _StName, St) ->
-    error_logger:info_msg("~p is going down~n", [?MODULE]),
+terminate(_R, _StName, #st{id=Id}=St) ->
+    error_logger:info_msg("~p is going down~n", [Id]),
     backoff:deregister(),
     stop(St),
     ok.
@@ -96,8 +96,8 @@ active(R, _F, St) ->
 
 % Privates
 
-babysit(#st{ets=Ets}=St) ->
-    Count = start_all(Ets),
+babysit(#st{}=St) ->
+    Count = start_all(St),
     case Count of
         0 -> 
             ok = backoff:regular(),
@@ -113,7 +113,9 @@ wake(#st{ets=Ets}=St) ->
 
 wake(_, '$end_of_table') ->
     ok;
-wake(#st{ets=Ets}=St, Id0) ->
+wake(#st{wake_mf=undefined}, _) ->
+    ok;
+wake(#st{ets=Ets, wake_mf={Module, Func}}=St, Id0) ->
     case ets:lookup(Ets, Id0) of
         [] ->
             ok;
@@ -124,7 +126,7 @@ wake(#st{ets=Ets}=St, Id0) ->
                 false -> 
                     ok;
                 true -> 
-                    esmetx:wake(Pid)
+                    Module:Func(Pid)
             end
     end,
     Id = ets:next(Ets, Id0),
@@ -136,7 +138,9 @@ stop(#st{ets=Ets}=St) ->
 
 stop(_, '$end_of_table') ->
     ok;
-stop(#st{ets=Ets}=St, Id0) ->
+stop(#st{stop_mf=undefined}, _) ->
+    ok;
+stop(#st{ets=Ets, stop_mf={Module,Func}}=St, Id0) ->
     case ets:lookup(Ets, Id0) of
         [] ->
             ok;
@@ -147,52 +151,53 @@ stop(#st{ets=Ets}=St, Id0) ->
                 false -> 
                     ok;
                 true -> 
-                    esmetx:stop(Pid)
+                    Module:Func(Pid)
             end
     end,
     Id = ets:next(Ets, Id0),
     stop(St, Id).
 
 
-start_all(Ets) ->
+start_all(#st{ets=Ets}=St) ->
     Id = ets:first(Ets),
-    start_next(Ets, Id, 0).
+    start_next(St, Id, 0).
 
 start_next(_, '$end_of_table', Count) ->
     Count;
-start_next(Ets, Id0, C0) ->
+start_next(#st{ets=Ets}=St, Id0, C0) ->
     Id = ets:next(Ets, Id0),
 
-    case start_if_not_running(Ets, Id0) of
+    case start_if_not_running(St, Id0) of
         ok ->
-            start_next(Ets, Id, C0+1);
+            start_next(St, Id, C0+1);
         {error, _Reason} ->
-            start_next(Ets, Id, C0)
+            start_next(St, Id, C0)
     end.
 
-start_if_not_running(Ets, Id) ->
+start_if_not_running(#st{ets=Ets}=St, Id) ->
     case ets:lookup(Ets, Id) of
         [] ->
-            start_child(Ets, Id);
+            start_child(St, Id);
         [{Id, undefined}] ->
-            start_child(Ets, Id);
+            start_child(St, Id);
         [{Id, Pid}] when is_pid(Pid) ->
             case is_process_alive(Pid) of
                 false -> 
-                    start_child(Ets, Id);
+                    start_child(St, Id);
                 true -> 
                     ok  
             end
     end.
             
-start_child(Ets, Id) ->
-    case tx_sup:start_child(Id) of
+start_child(#st{ets=Ets, start_mf={Module, Func}, id=Id}, Cid) ->
+    case Module:Func(Cid) of
         {ok, Pid} ->
-            ets:insert(Ets, {Id, Pid}),
-            error_logger:info_msg("Transmitter ~p started with Pid: ~p~n", [Id, Pid]),
+            ets:insert(Ets, {Cid, Pid}),
+            error_logger:info_msg("[~p] Child ~p started with Pid: ~p~n", [Id, Cid, Pid]),
             ok;
         {error, Reason} ->
-            error_logger:info_msg("Transmitter ~p failed to start with Reason: ~p~n", [Id, Reason]),
+            error_logger:info_msg("[~p] Child ~p failed to start with Reason:
+                                 ~p~n", [Id, Cid, Reason]),
             {error, Reason}
     end.
 
