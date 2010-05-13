@@ -5,8 +5,8 @@
     {modules, 
         [ 
             backoff,
-            txq, tx_sup, tx_nanny, esmetx, 
-            rx_sup, rx_nanny, esmerx, 
+            txq, tx_sup, nanny, esmetx, 
+            rx_sup, esmerx, 
             simreg_misultin, simreg,
             puk, reg, sms, simreg_services,
             simregctl, util
