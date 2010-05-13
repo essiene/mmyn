@@ -60,7 +60,7 @@ init([]) ->
     TxNanny = {tx_nanny,
         {nanny, start_link, [tx_nanny, {tx_nanny_num_children, tx_nanny_backoff}, 
                                         {tx_sup,start_child}, 
-                                        {esmetx,stop},{esmetx,wake}]},
+                                        {esmetx,stop},{{esmetx,wake}, 1000}]},
         permanent, 5000, worker, [tx_nanny]},
 
     RxSup = {rx_sup,
@@ -70,7 +70,7 @@ init([]) ->
     RxNanny = {rx_nanny,
         {nanny, start_link, [rx_nanny, {rx_nanny_num_children, rx_nanny_backoff}, 
                                             {rx_sup,start_child}, 
-                                            {esmerx,stop}, undefined]},
+                                            {esmerx,stop}, {undefined, undefined}]},
         permanent, 5000, worker, [rx_nanny]},
 
     Webservice = {simreg_misultin,

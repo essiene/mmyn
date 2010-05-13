@@ -9,7 +9,7 @@
 
 -export([start_link/5, add_child/1, babysit_all/1, wake_all/1]).
 
--record(st, {ets, count=0, backoff, id, start_mf, stop_mf, wake_mf}).
+-record(st, {ets, count=0, backoff, id, start_mf, stop_mf, wake_mf, last_wake, wake_threshold}).
 
 
 start_link(Id, Env, StartMf, StopMf, WakeMf) ->
@@ -24,7 +24,7 @@ babysit_all(Id) ->
 wake_all(Id) ->
     gen_fsm:send_event(Id, wake).
 
-init([Id, {EnvChildren, EnvBackoff}, StartMf, StopMf, WakeMf]) ->
+init([Id, {EnvChildren, EnvBackoff}, StartMf, StopMf, {WakeMf, WakeThreshold}]) ->
     process_flag(trap_exit, true),
 
     {ok, Count} = application:get_env(EnvChildren),
@@ -34,7 +34,9 @@ init([Id, {EnvChildren, EnvBackoff}, StartMf, StopMf, WakeMf]) ->
     tag_and_load(Tid, Count),
     case backoff:register(Min, Max, Delta, {?MODULE, babysit_all, [Id]}) of
         ok -> 
-            {ok, idle, #st{ets=Tid, backoff=BackOff, id=Id, start_mf=StartMf, stop_mf=StopMf, wake_mf=WakeMf}};
+            {ok, idle, #st{ets=Tid, backoff=BackOff, id=Id, start_mf=StartMf,
+                              stop_mf=StopMf, wake_mf=WakeMf,
+                              wake_threshold=WakeThreshold}};
         {error, Reason} ->
             {stop, Reason}
     end.
@@ -73,9 +75,27 @@ idle(_, St) ->
 active(babysit, St) ->
     babysit(St);
 
-active(wake, St) ->
+active(wake, #st{wake_threshold=undefined}=St) ->
     wake(St),
-    {next_state, active, St};
+    T = calendar:local_time(),
+    {next_state, active, St#st{last_wake=T}};
+
+active(wake, #st{last_wake=undefined}=St) ->
+    wake(St),
+    T = calendar:local_time(),
+    {next_state, active, St#st{last_wake=T}};
+
+active(wake, #st{last_wake=T1, wake_threshold=Threshold}=St) ->
+    T2 = calendar:local_time(),
+    Tdiff = calendar:time_difference(T1, T2),
+    MilliSecs = daystime_to_millisecs(Tdiff),
+
+    case MilliSecs of
+        N when N < Threshold ->
+            {next_state, active, St};
+        _ -> 
+            active(wake, St#st{last_wake=undefined})
+    end;
 
 active(_, St) ->
     {next_state, active, St}.
@@ -212,3 +232,10 @@ tag(_, 0, _, Accm) ->
     Accm;
 tag(Ets, N, Value, Accm) ->
     tag(Ets, N-1, Value, [{N, Value}|Accm]).
+
+daystime_to_millisecs({Days, {H, M, S}}) ->
+    Ms1 = 864000 * Days,
+    Ms2 = Ms1 + 3600 * H,
+    Ms3 = Ms2 + 60 * M,
+    Ms4 = Ms3 + S,
+    Ms4 * 1000.
