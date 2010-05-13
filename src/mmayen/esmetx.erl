@@ -19,7 +19,7 @@
 -define(BK_OFF_GROW, 1000).
 -define(TXQ_CHK, txq_chk).
 
--record(st, {host, port, system_id, password, smpp, id, esmetx_backoff}).
+-record(st, {host, port, system_id, password, smpp, id, esmetx_backoff, awake}).
 
 start_link(Id) ->
     gen_esme:start_link(?MODULE, [Id], []).
@@ -42,7 +42,7 @@ init([Id]) ->
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
             #st{host=Host, port=Port, system_id=SystemId, password=Password,
-                id=Id, esmetx_backoff=Backoff}}.
+                id=Id, esmetx_backoff=Backoff, awake=false}}.
 
 handle_bind(Smpp, #st{id=Id, esmetx_backoff={Min, Max, Delta}}=St) ->
     error_logger:info_msg("[~p] Transmitter ~p bound~n", [self(), Id]),
@@ -60,26 +60,30 @@ handle_unbind(_Pdu, St) ->
 handle_call(Req, _From, St) ->
     {reply, {error, Req}, St}.
 
-handle_cast(wake, St) ->
+handle_cast(wake, #st{awake=false}=St) ->
     ok = backoff:regular(),
+    {noreply, St#st{awake=true}};
+
+handle_cast(wake, #st{awake=true}=St) ->
     {noreply, St};
 
 handle_cast(stop, #st{id=Id}=St) ->
     backoff:deregister(),
     error_logger:info_msg("[~p] Transmitter ~p has deregistered from backoff~n", [self(), Id]),
-    {stop, normal, St};
+    {stop, normal, St#st{awake=false}};
 
 handle_cast(check_and_send, #st{smpp=Smpp, id=Id}=St) ->
     case txq:pop() of 
         '$empty' ->
             error_logger:info_msg("[~p] Transmitter ~p found no tx req to send~n", [self(), Id]),
-            ok = backoff:increment();
+            ok = backoff:increment(),
+            {noreply, St#st{awake=false}};
         #txq_req{src=Src, dst=Dest, message=Msg} ->
             smpp:send(Smpp, #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}),
             error_logger:info_msg("[~p] Transmitter ~p has sent tx req~n", [self(), Id]),
-            ok = backoff:regular()
-    end,
-    {noreply, St};
+            ok = backoff:regular(),
+            {noreply, St#st{awake=true}}
+    end;
 
 handle_cast(_Req, St) ->
     {noreply, St}.
