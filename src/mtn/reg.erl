@@ -24,7 +24,8 @@ get(Msisdn) ->
                     </soapenv:Body> 
             </soapenv:Envelope>"),
 
-    util:soap_request("http://10.1.230.100:5013/SystemCISExtension/SystemCISExtension", [
+    Url = application:get_env(soap_url_reg),
+    util:soap_request(Url, [
             {"Accept-Encoding", "identity"},
             {"Soapaction", ""},
             {"User-Agent", "Mmayen/1.0"},

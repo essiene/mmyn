@@ -68,5 +68,3 @@ sms_format_msg(Fmt, Args) ->
             S0 = string:substr(S, 1, ?SMS_MSG_MAX_LEN),
             S0 ++ "..."
     end.
-        
-        
