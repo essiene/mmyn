@@ -29,7 +29,8 @@ handle_sms(Src, "789", ["help" | _Rest]) ->
     util:sms_response(Src, "help) Menu\npuk) Get puk\nreg)Get status");
 
 handle_sms(Src, "789", ["puk", _PUK | _Rest]) ->
-    util:sms_response(Src, "Your supplied PUK is correct");
+    {ok, Msg} = application:get_env(msg_puk_put),
+    util:sms_response(Src, #soap_response{status=0, message=Msg});
 
 handle_sms(Src, "789", ["puk" | _Rest]) ->
     Res = puk:get(Src),
@@ -38,29 +39,24 @@ handle_sms(Src, "789", ["puk" | _Rest]) ->
 handle_sms(Src, "789", ["reg" , Msisdn0 | _Rest]) ->
     Msisdn1 = msisdn_strip(Msisdn0, 5),
     Msisdn = string:concat("234", Msisdn1),
-
-    case reg:get(Msisdn) of
-        #soap_response{status=0}=R ->
-            Msg = string:concat(Msisdn, " is fully registered on the MTNN network"),
-            util:sms_response(Src, R#soap_response{message=Msg});
-        #soap_response{status=100}=R ->
-            Msg = string:concat(Msisdn, " is NOT YET registered on the MTNN network"),
-            util:sms_response(Src, R#soap_response{message=Msg});
-        R ->
-            util:sms_response(Src, R)
-    end;
+    get_reg_status(Src, Msisdn);
 
 handle_sms(Src, "789", ["reg" | _Rest]) ->
-    case reg:get(Src) of
-        #soap_response{status=0}=R ->
-            Msg = "Your SIM is fully registered on the MTNN network",
-            util:sms_response(Src, R#soap_response{message=Msg});
-        #soap_response{status=100}=R ->
-            Msg = "Your SIM is NOT YET registered on the MTNN network",
-            util:sms_response(Src, R#soap_response{message=Msg});
-        R ->
-            util:sms_response(Src, R)
-    end;
+    get_reg_status(Src, Src);
 
 handle_sms(Src, Dst, WordList) ->
     error_logger:info_report([unhandled_sms, {src, Src}, {dst, Dst}, {wordlist, WordList}]).
+
+get_reg_status(To, Msisdn) ->
+    case reg:get(Msisdn) of
+        #soap_response{status=0}=R ->
+            {ok, Fmt} = application:get_env(msg_reg_get_ok),
+            Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
+            util:sms_response(To, R#soap_response{message=Msg});
+        #soap_response{status=100}=R ->
+            {ok, Fmt} = application:get_env(msg_reg_get_fail),
+            Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
+            util:sms_response(To, R#soap_response{message=Msg});
+        R ->
+            util:sms_response(To, R)
+    end.
