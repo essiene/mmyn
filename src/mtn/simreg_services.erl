@@ -3,6 +3,9 @@
 
 -export([handle_sms/3, msisdn_strip/2]).
 
+% TODO: This entire module should have an init/1 so it can initialize and hold
+%       things like config values, etc.
+
 
 msisdn_strip(<<"+",Rest/binary>>, MinLen) ->
     msisdn_strip(Rest, MinLen);
