@@ -49,7 +49,9 @@ process({characters, X}, #soap_response{flag='ERRMSG'}=Res) ->
 process({characters, "SIM Card"}, #soap_response{flag='EQUIPMENT'}=Res) ->
     Res#soap_response{flag='READ_PUK'};
 process({characters, X}, #soap_response{flag='PUK'}=Res) ->
-    Msg = "Your PUK is " ++ X,
+    % TODO: are we in danger of string manipulation/ code injection here?
+    {ok, Fmt} = application:get_env(msg_puk_get),
+    Msg = lists:flatten(io_lib:format(Fmt, [X])),
     Res#soap_response{message=Msg, flag=undefined};
 process({startElement, _, "returnCode", _, _}, Res) ->
     Res#soap_response{flag='STATUS'};
