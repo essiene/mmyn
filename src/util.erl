@@ -3,11 +3,7 @@
 
 -include("simreg.hrl").
 
--define(SMS_SRC, "SimReg").
--define(SMS_ERR_SRC, "SErr").
--define(NOTIFY_MSISDN, "2347034494316").
--define(MSG_SVC_UNAVAIL, "This service is temporarily unavailable. Please try again later").
--define(SMS_MSG_MAX_LEN, 130).
+-define(SMS_MSG_MAX_LEN, 156).
 
 
 soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->

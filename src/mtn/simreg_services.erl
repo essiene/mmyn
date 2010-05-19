@@ -1,11 +1,74 @@
 -module(simreg_services).
 -include("simreg.hrl").
+-behaviour(gen_sms_handler).
 
--export([handle_sms/3, msisdn_strip/2]).
+-define(SMS_SRC, "SimReg").
+-define(SMS_ERR_SRC, "SErr").
+-define(MSG_SVC_UNAVAIL, "This service is temporarily unavailable. Please try again later").
 
-% TODO: This entire module should have an init/1 so it can initialize and hold
-%       things like config values, etc.
+-export([init/0,handle_sms/5,terminate/2]).
+-export([msisdn_strip/2]).
 
+init() ->
+    {ok, nil}.
+
+handle_sms(_, _, ["-mmyn#err1" | _], _, St) ->
+    {noreply,
+        {error, {test, 500, "Test generated error"}},
+        St};
+
+handle_sms(_, _, ["-mmyn#err2" | _], _, St) ->
+    {reply,
+        {"mmynerr", "Test generated error"},
+        {error, {test, 500, "Test generated error"}},
+        St};
+
+handle_sms(_, _, ["-mmyn#tst" | _], _, St) ->
+    {reply,
+        {"mmyn", "Tested and working"},
+        ok,
+    St};
+
+handle_sms(_, "789", ["-mmyn#vsn" | _], _, St) ->
+    {reply, 
+        {"mmyn", "eng: Mmayen\nvsn: 1.0\nos: Solaris 10"}, 
+        ok, 
+    St};
+
+handle_sms(_, "789", ["help" | _], _, St) ->
+    {reply, 
+        {?SMS_SRC, "help) Menu\npuk) Get puk\nreg)Get status"},
+        ok,
+    St};
+
+
+handle_sms(_, "789", ["puk", _PUK | _], _, St) ->
+    {ok, Msg} = application:get_env(msg_puk_put),
+    {reply,
+        {?SMS_SRC, Msg},
+        ok,
+    St};
+
+handle_sms(Msisdn, "789", ["puk" | _], _, St) ->
+    Res = puk:get(Msisdn),
+    sms_response(St, Res);
+
+handle_sms(_, "789", ["reg" , Msisdn0 | _], _, St) ->
+    Msisdn1 = msisdn_strip(Msisdn0, 5),
+    Msisdn = string:concat("234", Msisdn1),
+    get_reg_status(St, Msisdn);
+
+handle_sms(Msisdn, "789", ["reg" | _], _, St) ->
+    get_reg_status(St, Msisdn);
+
+handle_sms(Src, Dst, WordList, _, St) ->
+    error_logger:info_msg("[~p] Got unhandled SMS. ~p => ~p : ~p~n", [?MODULE, Src, Dst, WordList]),
+    {noreply, ok, St}.
+
+terminate(_Reason, _St) ->
+    ok.
+
+% Privates
 
 msisdn_strip(<<"+",Rest/binary>>, MinLen) ->
     msisdn_strip(Rest, MinLen);
@@ -24,31 +87,6 @@ msisdn_strip(Msisdn, MinLen) when is_list(Msisdn), is_integer(MinLen) ->
 
 msisdn_strip(Msisdn, _) ->
     binary_to_list(Msisdn).
-
-handle_sms(Src, "789", ["-mmyn#vsn" | _Rest]) ->
-    sms:send("mmyn", Src, "eng: Mmayen\nvsn: 1.0\nos: Solaris 10");
-
-handle_sms(Src, "789", ["help" | _Rest]) ->
-    util:sms_response(Src, "help) Menu\npuk) Get puk\nreg)Get status");
-
-handle_sms(Src, "789", ["puk", _PUK | _Rest]) ->
-    {ok, Msg} = application:get_env(msg_puk_put),
-    util:sms_response(Src, #soap_response{status=0, message=Msg});
-
-handle_sms(Src, "789", ["puk" | _Rest]) ->
-    Res = puk:get(Src),
-    util:sms_response(Src, Res);
-
-handle_sms(Src, "789", ["reg" , Msisdn0 | _Rest]) ->
-    Msisdn1 = msisdn_strip(Msisdn0, 5),
-    Msisdn = string:concat("234", Msisdn1),
-    get_reg_status(Src, Msisdn);
-
-handle_sms(Src, "789", ["reg" | _Rest]) ->
-    get_reg_status(Src, Src);
-
-handle_sms(Src, Dst, WordList) ->
-    error_logger:info_report([unhandled_sms, {src, Src}, {dst, Dst}, {wordlist, WordList}]).
 
 get_reg_status(To, Msisdn) ->
     case reg:get(Msisdn) of
