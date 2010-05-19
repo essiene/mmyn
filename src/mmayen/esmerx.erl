@@ -107,3 +107,34 @@ code_change(_OldVsn, St, _Extra) ->
 preprocess(Msg) ->
     Lower = string:to_lower(Msg),
     {ok, string:tokens(Lower, " ")}.
+
+send(_, _, {From, To, Reply}) ->
+    sms:send(From, To, Reply);
+
+send(_, To, {From, Reply}) ->
+    sms:send(From, To, Reply);
+
+send(From, To, Reply) ->
+    sms:send(From, To, Reply).
+
+notify(_, ok) ->
+    ok;
+notify(_, {ok, _}) ->
+    ok;
+notify(#st{id=Id, notify_msisdns=MsisdnList, notify_sender=Src}, Error) ->
+    error_logger:info_msg("[~p] Receiver ~p is going to notify: ~p => ~p (~p)~n", [self(), Id, Src, MsisdnList, Error]),
+    notify(Src, MsisdnList, Error).
+
+notify(_, undefined, _) ->
+    ok;
+notify(undefined, MsisdnList, Error) ->
+    notify("mmyn", MsisdnList, Error);
+notify(_, [], Msg) when is_list(Msg) ->
+    ok;
+notify(Src, [Msisdn|Rest], Msg) when is_list(Msg) ->
+    send(Src, Msisdn, Msg),
+    notify(Src, Rest, Msg);
+notify(Src, MsisdnList, {error, {Op, Code, Message}}) ->
+    notify(Src, MsisdnList, util:sms_format_msg("~p~n~p~n~p", [Op, Code, Message]));
+notify(Src, MsisdnList, {error, Reason}) ->
+    notify(Src, MsisdnList, util:sms_format_msg("~p", [Reason])).
