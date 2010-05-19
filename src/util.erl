@@ -44,7 +44,7 @@ sms_format_msg(Fmt, Args) ->
     case length(S) of
         0 ->
             "Empty Msg";
-        N when N < 130 -> 
+        N when N < ?SMS_MSG_MAX_LEN -> 
             S;
         _ ->
             S0 = string:substr(S, 1, ?SMS_MSG_MAX_LEN),
