@@ -9,12 +9,13 @@
             rx_sup, esmerx, 
             simreg_misultin, simreg,
             puk, reg, sms, simreg_services,
-            simregctl, util, gen_sms_handler
+            simregctl, util, gen_sms_handler,
+            tlog
         ]
    },
 
   {registered, 
-      [backoff, txq, tx_sup, tx_nanny, rx_sup, rx_nanny, simreg_misultin, simreg]
+      [backoff, txq, tx_sup, tx_nanny, rx_sup, rx_nanny, simreg_misultin, simreg, tlog]
   },
 
   {applications, 
