@@ -14,7 +14,10 @@
 
 -export([start_link/1, start/1, stop/1]).
 
--record(st, {host, port, system_id, password, smpp, callback, id}).
+-record(st, {host, port, system_id, password, smpp, callback, id,
+        notify_msisdns, notify_sender}).
+-record(cb, {mod, st, ready=false}).
+
 
 start_link(Id) ->
     gen_esme:start_link(?MODULE, [simreg_services, Id], []).
