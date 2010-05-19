@@ -9,7 +9,7 @@
             rx_sup, esmerx, 
             simreg_misultin, simreg,
             puk, reg, sms, simreg_services,
-            simregctl, util
+            simregctl, util, gen_sms_handler
         ]
    },
 
