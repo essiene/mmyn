@@ -55,17 +55,15 @@ handle_pdu(#pdu{body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_me
     {ok, WordList} = preprocess(Msg),
 
     error_logger:info_msg("[~p] Receiver ~p is calling callback ~p:~p~n", [self(), Id, CbMod, CbSt]),
-%    Tid = log_req(Id, Sn, Src, Dst, Msg, Callback),
+    Tid = log_req(St, Pdu),
     case CbMod:handle_sms(Src, Dst, WordList, Pdu, CbSt) of
        {noreply, Status, CbSt1} ->
-%            status(Tid, Status),
-            error_logger:info_msg("Calling notify on NOREPLY~n"),
+            log_status(Tid, Status),
             notify(St, Status),
             {noreply, St#st{callback=Cb#cb{st=CbSt1}}};
         {reply, Reply, Status, CbSt1} ->
-%            status(Tid, Reply, Status),
+            log_status(Tid, {Dst, Src, Reply}, Status),
             send(Dst, Src, Reply),
-            error_logger:info_msg("Calling notify on REPLY~n"),
             notify(St, Status),
             {noreply, St#st{callback=Cb#cb{st=CbSt1}}}
     end;
