@@ -30,10 +30,12 @@ stop(Pid) ->
 
 init([Callback, Id]) ->
     {Host, Port, SystemId, Password} = util:smsc_params(),
+    {NotifyMsisdns, NotifySender} = util:notify_params(),
     {ok, {Host, Port, 
             #bind_receiver{system_id=SystemId, password=Password}}, 
             #st{host=Host, port=Port, system_id=SystemId, password=Password,
-                callback=Callback, id=Id}}.
+                callback=#cb{mod=Callback}, id=Id, notify_msisdns=NotifyMsisdns,
+            notify_sender=NotifySender}}.
 
 handle_bind(Smpp, #st{id=Id}=St) ->
     error_logger:info_msg("[~p] Receiver ~p bound~n", [self(), Id]),

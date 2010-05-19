@@ -1,5 +1,5 @@
 -module(util).
--export([soap_request/5, sms_response/2, smsc_params/0, sms_format_msg/2]).
+-export([soap_request/5, sms_response/2, smsc_params/0, sms_format_msg/2, notify_params/0]).
 
 -include("simreg.hrl").
 
@@ -56,6 +56,12 @@ smsc_params() ->
     {ok, SystemId} = application:get_env(smsc_username), 
     {ok, Password} = application:get_env(smsc_password), 
     {Host, Port, SystemId, Password}.
+
+notify_params() -> 
+    {ok, Msisdns} = application:get_env(notify_msisdns), 
+    {ok, Sender} = application:get_env(notify_sender), 
+    {Msisdns, Sender}.
+
 
 sms_format_msg(Fmt, Args) ->
     S = lists:flatten(io_lib:format(Fmt, Args)),
