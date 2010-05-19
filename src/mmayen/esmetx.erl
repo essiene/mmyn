@@ -80,7 +80,7 @@ handle_cast(check_and_send, #st{smpp=Smpp, id=Id}=St) ->
             {noreply, St#st{awake=false}};
         #txq_req{src=Src, dst=Dest, message=Msg} ->
             smpp:send(Smpp, #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}),
-            error_logger:info_msg("[~p] Transmitter ~p has sent tx req~n", [self(), Id]),
+            error_logger:info_msg("[~p] Transmitter ~p has sent tx req: ~p ~p ~p~n", [self(), Id, Src, Dest, Msg]),
             ok = backoff:regular(),
             {noreply, St#st{awake=true}}
     end;
