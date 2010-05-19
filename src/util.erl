@@ -1,5 +1,5 @@
 -module(util).
--export([soap_request/5, sms_response/2, smsc_params/0, sms_format_msg/2, notify_params/0]).
+-export([soap_request/5, smsc_params/0, sms_format_msg/2, notify_params/0]).
 
 -include("simreg.hrl").
 
