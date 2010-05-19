@@ -1,6 +1,7 @@
 -module(esmerx).
--include("simreg.hrl").
 -behaviour(gen_esme).
+-include("simreg.hrl").
+-include("tlog.hrl").
 
 -export([init/1,
         handle_call/3,
@@ -138,3 +139,57 @@ notify(Src, MsisdnList, {error, {Op, Code, Message}}) ->
     notify(Src, MsisdnList, util:sms_format_msg("~p~n~p~n~p", [Op, Code, Message]));
 notify(Src, MsisdnList, {error, Reason}) ->
     notify(Src, MsisdnList, util:sms_format_msg("~p", [Reason])).
+
+log_req(#st{host=Host, port=Port, system_id=SystemId, id=Id, callback=#cb{mod=Module}},
+#pdu{sequence_number=Sn, body=#deliver_sm{source_addr=From, destination_addr=To,
+        short_message=Msg}}) ->
+
+    Req = #req{
+            seqnum = Sn, 
+            src = From, 
+            dst = To, 
+            msg = Msg},
+
+    tlog:req(Host,
+            Port,
+            SystemId,
+            Id,
+            Module,
+            Req).
+
+log_status(Tid, Status) ->
+    log_status(Tid, undefined, Status).
+
+log_status(Tid, undefined, Status) ->
+    log_status(Tid, {"", "", ""}, Status);
+
+log_status(Tid, {_, _, {From, To, Msg}}, Status) ->
+    log_status(Tid, {From, To, Msg}, Status);
+
+log_status(Tid, {_, To, {From, Msg}}, Status) ->
+    log_status(Tid, {From, To, Msg}, Status);
+
+log_status(Tid, Reply, ok) ->
+    log_status(Tid, Reply, {ok, {"", "", "", ""}});
+
+log_status(Tid, Reply, error) ->
+    log_status(Tid, Reply, {error, {"", "", "", ""}});
+
+log_status(Tid, Reply, {Status, {Op, Code}}) ->
+    log_status(Tid, Reply, {Status, {Op, Code, "", ""}});
+
+log_status(Tid, Reply, {Status, {Op, Code, Detail}}) ->
+    log_status(Tid, Reply, {Status, {Op, Code, Detail, ""}});
+
+log_status(Tid, {From, To, Msg}, {Status, {Op, Code, Detail, Extra}}) ->
+    Res = #res{
+            src=From, 
+            dst=To, 
+            msg=Msg,
+            status=Status,
+            op=Op,
+            code=Code,
+            detail=Detail,
+            extra=Extra},
+
+    tlog:status(Tid, Res).
