@@ -37,15 +37,39 @@ init([Callback, Id]) ->
                 callback=#cb{mod=Callback}, id=Id, notify_msisdns=NotifyMsisdns,
             notify_sender=NotifySender}}.
 
-handle_bind(Smpp, #st{id=Id}=St) ->
+handle_bind(Smpp, #st{id=Id, callback=#cb{mod=CbMod}=Cb}=St0) ->
     error_logger:info_msg("[~p] Receiver ~p bound~n", [self(), Id]),
-    {noreply, St#st{smpp=Smpp}}.
+    St1 = St0#st{smpp=Smpp},
+    case CbMod:init() of
+        {ok, CbState} ->
+            {noreply, St1#st{callback=Cb#cb{st=CbState, ready=true}}};
+        {stop, Reason} ->
+            error_logger:error_report("[~p] Callback module ~p failed to initialize with reason: ~p~n", [self(), Reason]),
+            {noreply, St1}
+    end.
 
-handle_pdu(#pdu{body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_message=Msg}}=Pdu, #st{callback=Callback, id=Id}=St) ->
+handle_pdu(#pdu{body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_message=Msg}}=Pdu, 
+        #st{callback=#cb{mod=CbMod, st=CbSt, ready=true}=Cb, id=Id}=St) ->
     error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
     {ok, WordList} = preprocess(Msg),
-    Callback:handle_sms(Src, Dst, WordList),
-    {noreply, St};
+
+    error_logger:info_msg("[~p] Receiver ~p is calling callback ~p:~p~n", [self(), Id, CbMod, CbSt]),
+%    Tid = log_req(Id, Sn, Src, Dst, Msg, Callback),
+    case CbMod:handle_sms(Src, Dst, WordList, Pdu, CbSt) of
+       {noreply, Status, CbSt1} ->
+%            status(Tid, Status),
+            error_logger:info_msg("Calling notify on NOREPLY~n"),
+            notify(St, Status),
+            {noreply, St#st{callback=Cb#cb{st=CbSt1}}};
+        {reply, Reply, Status, CbSt1} ->
+%            status(Tid, Reply, Status),
+            send(Dst, Src, Reply),
+            error_logger:info_msg("Calling notify on REPLY~n"),
+            notify(St, Status),
+            {noreply, St#st{callback=Cb#cb{st=CbSt1}}}
+    end;
+
+    
 
 handle_pdu(Pdu, #st{id=Id}=St) ->
     error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
@@ -69,6 +93,10 @@ handle_info(Req, #st{id=Id}=St) ->
     error_logger:info_msg("[~p] Receiver ~p has recieved a non gen_server request: ~p", [self(), Id, Req]),
     {noreply, St}.
 
+terminate(Reason, #st{id=Id, callback=#cb{mod=CbMod, st=CbSt, ready=true}}) ->
+    error_logger:info_msg("[~p] Receiver ~p is terminating with reason: ~p~n", [self(), Id, Reason]),
+    CbMod:terminate(Reason,CbSt),
+    ok;
 terminate(Reason, #st{id=Id}) ->
     error_logger:info_msg("[~p] Receiver ~p is terminating with reason: ~p~n", [self(), Id, Reason]),
     ok.
