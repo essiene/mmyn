@@ -93,11 +93,35 @@ get_reg_status(To, Msisdn) ->
         #soap_response{status=0}=R ->
             {ok, Fmt} = application:get_env(msg_reg_get_ok),
             Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
-            util:sms_response(To, R#soap_response{message=Msg});
+            sms_response(To, R#soap_response{message=Msg});
         #soap_response{status=100}=R ->
             {ok, Fmt} = application:get_env(msg_reg_get_fail),
             Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
-            util:sms_response(To, R#soap_response{message=Msg});
+            sms_response(To, R#soap_response{message=Msg});
         R ->
-            util:sms_response(To, R)
+            sms_response(To, R)
     end.
+
+sms_response(St, #soap_response{status=N, message=undefined, op=Op}) ->
+    {reply,
+        {?SMS_SRC, ?MSG_SVC_UNAVAIL},
+        {error, {Op, N, "Unable to get response"}},
+    St};
+
+sms_response(St, #soap_response{status=0, message=Msg, op=Op}) ->
+    {reply,
+        {?SMS_SRC, Msg},
+        {ok, {Op, 0}},
+    St};
+
+sms_response(St, #soap_response{status=100, op=reg=Op, message=Msg}) ->
+    {reply,
+        {?SMS_SRC, Msg},
+        {ok, {Op, 0}},
+    St};
+
+sms_response(St, #soap_response{status=N, message=Msg, op=Op}) ->
+    {reply,
+        {?SMS_SRC, ?MSG_SVC_UNAVAIL},
+        {error, {Op, N, Msg}},
+    St}.

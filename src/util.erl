@@ -26,26 +26,6 @@ soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
             #soap_response{status=1000, message=Msg, op=Op}
     end.
 
-sms_response(Dest, #soap_response{message=undefined}) ->
-    error_logger:error_msg("[~p] Was unable to get a soap response~n", [self()]),
-    sms:send(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
-    sms:send(?SMS_ERR_SRC, ?NOTIFY_MSISDN, "Unable to get response");
-
-sms_response(Dest, #soap_response{status=0, message=Msg}) ->
-    sms:send(?SMS_SRC, Dest, Msg);
-
-sms_response(Dest, #soap_response{status=100, op=reg, message=Msg}) ->
-    sms:send(?SMS_SRC, Dest, Msg);
-
-sms_response(Dest, #soap_response{status=N, message=Msg}=Res) ->
-    error_logger:error_msg("[~p] Got soap response: ~p~n", [self(), Res]),
-    sms:send(?SMS_SRC, Dest, ?MSG_SVC_UNAVAIL),
-    Msg1 = sms_format_msg("~p~n~p", [N, Msg]),
-    sms:send(?SMS_ERR_SRC, ?NOTIFY_MSISDN, Msg1);
-
-sms_response(Dest, Msg) ->
-    sms:send(?SMS_SRC, Dest, Msg).
-    
 smsc_params() -> 
     {ok, Host} = application:get_env(smsc_host), 
     {ok, Port} = application:get_env(smsc_port), 
