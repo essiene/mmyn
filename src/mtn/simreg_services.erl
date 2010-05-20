@@ -17,10 +17,27 @@ init() ->
     LogFile = "ext",
     Suffix = "log",
 
-    {ok, _} = log4erl:add_logger(?LOGGER),
-    {ok, _} = log4erl:add_file_appender(?LOGGER, file_logger, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}),
+    AddAppender = fun () ->
+        case log4erl:add_file_appender(?LOGGER, file_logger_ext, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
+            {ok, _} ->
+                {ok, nil};
+            {error, {already_started, _}} ->
+                {ok, nil};
+            {error, Reason} ->
+                {stop, Reason}
+        end
+    end,
 
-    {ok, nil}.
+    case log4erl:add_logger(?LOGGER) of
+        {ok, _} ->
+            AddAppender();
+        {error, {already_started, _}} ->
+            AddAppender();
+        {error, Reason} ->
+            {stop, Reason}
+    end.
+
+
 
 handle_sms(_, _, _, ["-mmyn#err1" | _], _, St) ->
     {noreply,
