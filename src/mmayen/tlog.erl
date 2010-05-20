@@ -26,10 +26,10 @@ req(Host, Port, SystemId, RxId, CallbackModule, #req{}=Req0) ->
         rxpid=self(),
         handler=CallbackModule,
         req=Req},
-    gen_server:handle_call(?MODULE, {req, Tlog}).
+    gen_server:call(?MODULE, {req, Tlog}).
 
 status(Tid, #res{}=Res) ->
-    gen_server:handle_call(?MODULE, {status, Tid, now(), Res}).
+    gen_server:call(?MODULE, {status, Tid, now(), Res}).
 
 
 
