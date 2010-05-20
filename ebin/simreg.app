@@ -19,7 +19,7 @@
   },
 
   {applications, 
-      [kernel, stdlib, sasl, ibrowse]
+      [kernel, stdlib, sasl, ibrowse, log4erl]
   },
 
   {env, []},
