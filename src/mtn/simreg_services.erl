@@ -63,7 +63,7 @@ handle_sms(Msisdn, "789", ["reg" | _], _, St) ->
 
 handle_sms(Src, Dst, WordList, _, St) ->
     error_logger:info_msg("[~p] Got unhandled SMS. ~p => ~p : ~p~n", [?MODULE, Src, Dst, WordList]),
-    {noreply, ok, St}.
+    {noreply, {ok, {default, "404", "Unhandled SMS"}}, St}.
 
 terminate(_Reason, _St) ->
     ok.
