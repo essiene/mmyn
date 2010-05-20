@@ -49,9 +49,9 @@ init([]) ->
     {ok, #st{tbl=Tbl}}.
 
 
-handle_call({req, #tlog{}=Tlog}, _F, #st{tbl=Tbl}=St) ->
+handle_call({req, #tlog{tid=Tid}=Tlog}, _F, #st{tbl=Tbl}=St) ->
     ok = dets:insert(Tbl, Tlog),
-    {reply, ok, St};
+    {reply, Tid, St};
 
 handle_call({status, Tid, Now, #res{}=Res0}, _F, #st{tbl=Tbl}=St) ->
     case dets:lookup(Tbl, Tid) of
