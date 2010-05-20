@@ -15,7 +15,7 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 req(Host, Port, SystemId, RxId, CallbackModule, #req{}=Req0) ->
-    Req = Req0#req{datetime=dtstmp()},
+    Req = Req0#req{datetime=now()},
     Tlog = #tlog{
         tid=tid(),
         node=node(),
