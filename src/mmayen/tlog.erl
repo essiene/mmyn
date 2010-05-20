@@ -41,8 +41,8 @@ init([]) ->
     LogFile = "transaction",
     Suffix = "log",
 
-    ok = log4erl:add_logger(?LOGGER),
-    ok = log4erl:add_file_appender(?LOGGER, file_logger, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}),
+    {ok, _} = log4erl:add_logger(?LOGGER),
+    {ok, _} = log4erl:add_file_appender(?LOGGER, file_logger, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}),
     {ok, Tbl} = dets:open_file(?MODULE, [{file, BinLog}, {keypos, 2}]),
 
     error_logger:info_msg("~p started~n", [?MODULE]),
