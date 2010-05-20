@@ -58,7 +58,9 @@ handle_call({status, Tid, Now, #res{}=Res0}, _F, #st{tbl=Tbl}=St) ->
         [] ->
             {reply, ok, St};
         [#tlog{req=#req{datetime=DtStmp}}=Tlog0] ->
+
             ResponseTime = timer:now_diff(Now, DtStmp),
+
             Res = Res0#res{rt=ResponseTime},
             Tlog = Tlog0#tlog{res=Res},
 
@@ -78,7 +80,6 @@ handle_call(R, _F, St) ->
 
 handle_cast(_R, St) ->
     {noreply, St}.
-
 
 handle_info(_R, St) ->
     {noreply, St}.
