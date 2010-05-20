@@ -3,7 +3,7 @@
 
 -include_lib("mmayen/include/smpp.hrl").
 
--record(soap_response, {status, message, op, flag}).
+-record(soap_response, {status, message, op, flag, raw_req, raw_res}).
 
 -record(txq_req, {src, dst, message}).
 

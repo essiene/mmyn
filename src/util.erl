@@ -10,20 +10,20 @@ soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
     try ibrowse:send_req(Url, RqHdrs, post, RqBody) of
         {ok, "200", _, RsBody} -> 
             S = RsFun(RsBody),
-            S#soap_response{op=Op};
-        {ok, Status, _, _} -> 
+            S#soap_response{op=Op, raw_req=RqBody, raw_res=RsBody};
+        {ok, Status, _, RsBody} -> 
             error_logger:error_msg("[~p] Got HTTP ~p while calling ~p~n", [self(), Status, Url]),
             Msg = "HTTP " ++ Status,
-            #soap_response{status=Status, message=Msg, op=Op};
+            #soap_response{status=Status, message=Msg, op=Op, raw_req=RqBody, raw_res=RsBody};
         {error, Reason}=Error ->
             error_logger:error_msg("[~p] Got ~p while calling ~p~n", [self(), Error, Url]),
             Msg = sms_format_msg("error: ~p", [Reason]),
-            #soap_response{status=1000, message=Msg, op=Op}
+            #soap_response{status=1000, message=Msg, op=Op, raw_req=RqBody, raw_res=""}
     catch 
         Type:Message ->
             error_logger:error_msg("[~p] Got ~p while calling ~p~n", [self(), {Type, Message}, Url]),
             Msg = sms_format_msg("~p : ~p", [Type, Message]),
-            #soap_response{status=1000, message=Msg, op=Op}
+            #soap_response{status=1000, message=Msg, op=Op, raw_req=RqBody, raw_res=""}
     end.
 
 smsc_params() -> 
