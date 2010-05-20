@@ -5,11 +5,21 @@
 -define(SMS_SRC, "SimReg").
 -define(SMS_ERR_SRC, "SErr").
 -define(MSG_SVC_UNAVAIL, "This service is temporarily unavailable. Please try again later").
+-define(LOGGER, '__service_logger').
 
 -export([init/0,handle_sms/6,terminate/2]).
 -export([msisdn_strip/2]).
 
 init() ->
+    {ok, LogDir} = application:get_env(ext_logdir),
+    {ok, LogSize} = application:get_env(ext_logsize),
+    {ok, NumRotations} = application:get_env(ext_logkeep),
+    LogFile = "ext",
+    Suffix = "log",
+
+    {ok, _} = log4erl:add_logger(?LOGGER),
+    {ok, _} = log4erl:add_file_appender(?LOGGER, file_logger, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}),
+
     {ok, nil}.
 
 handle_sms(_, _, _, ["-mmyn#err1" | _], _, St) ->
@@ -51,6 +61,7 @@ handle_sms(_, _, "789", ["puk", _PUK | _], _, St) ->
 
 handle_sms(Tid, Msisdn, "789", ["puk" | _], _, St) ->
     Res = puk:get(Tid, Msisdn),
+    log(Tid, Res),
     sms_response(St, Res);
 
 handle_sms(Tid, _, "789", ["reg" , Msisdn0 | _], _, St) ->
@@ -91,14 +102,17 @@ msisdn_strip(Msisdn, _) ->
 get_reg_status(To, Tid, Msisdn) ->
     case reg:get(Tid, Msisdn) of
         #soap_response{status=0}=R ->
+            log(Tid, R),
             {ok, Fmt} = application:get_env(msg_reg_get_ok),
             Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
             sms_response(To, R#soap_response{message=Msg});
         #soap_response{status=100}=R ->
+            log(Tid, R),
             {ok, Fmt} = application:get_env(msg_reg_get_fail),
             Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
             sms_response(To, R#soap_response{message=Msg});
         R ->
+            log(Tid, R),
             sms_response(To, R)
     end.
 
@@ -125,3 +139,6 @@ sms_response(St, #soap_response{status=N, message=Msg, op=Op}) ->
         {?SMS_SRC, ?MSG_SVC_UNAVAIL},
         {error, {Op, N, Msg}},
     St}.
+
+log(Tid, #soap_response{raw_req=RawReq, raw_res=RawRes}) ->
+    log4erl:log(?LOGGER, debug, "~s|~s|~s", [Tid, RawReq, RawRes]).
