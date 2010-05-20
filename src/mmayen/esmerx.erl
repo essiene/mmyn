@@ -56,7 +56,7 @@ handle_pdu(#pdu{body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_me
 
     error_logger:info_msg("[~p] Receiver ~p is calling callback ~p~n", [self(), Id, CbMod]),
     Tid = log_req(St, Pdu),
-    case CbMod:handle_sms(Src, Dst, WordList, Pdu, CbSt) of
+    case CbMod:handle_sms(Tid, Src, Dst, WordList, Pdu, CbSt) of
        {noreply, Status, CbSt1} ->
             log_status(Tid, Status),
             notify(St, Status),

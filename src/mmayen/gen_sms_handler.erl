@@ -4,7 +4,7 @@
 behaviour_info(callbacks) ->
     [
         {init, 0},
-        {handle_sms, 5},
+        {handle_sms, 6},
         {terminate, 2}
     ];
 
