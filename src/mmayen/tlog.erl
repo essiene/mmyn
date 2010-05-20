@@ -1,6 +1,7 @@
 -module(tlog).
 -behaviour(gen_server).
 -include("tlog.hrl").
+-define(LOGGER, '__transaction_logger').
 
 -export([init/1,handle_call/3,handle_cast/2,
         handle_info/2,terminate/2,code_change/3]).
@@ -8,7 +9,7 @@
 -export([start_link/0, req/6, status/2]).
 
 
--record(st, {tbl, wait_dump, log_dir}).
+-record(st, {tbl}).
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
@@ -33,18 +34,19 @@ status(Tid, #res{}=Res) ->
 
 
 init([]) ->
-    {ok, LogDir} = application:get_env(tlog_dir),
     {ok, BinLog} = application:get_env(tlog_binlog),
-    {ok, WaitDump} = application:get_env(tlog_wait_dump),
+    {ok, LogDir} = application:get_env(tlog_logdir),
+    {ok, LogSize} = application:get_env(tlog_logsize),
+    {ok, NumRotations} = application:get_env(tlog_logkeep),
+    LogFile = "transaction",
+    Suffix = "log",
 
-    case dets:open_file(?MODULE, [{file, BinLog}, {keypos, 2}]) of
-        {ok, Tbl} -> 
-            error_logger:info_msg("~p started~n", [?MODULE]),
-            {ok, #st{tbl=Tbl, wait_dump=WaitDump, log_dir=LogDir}};
-        {error, Reason} ->
-            error_logger:info_msg("~p failed to start for reason ~p~n", [?MODULE, Reason]),
-            {stop, Reason}
-    end.
+    ok = log4erl:add_logger(?LOGGER),
+    ok = log4erl:add_file_appender(?LOGGER, file_logger, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}),
+    {ok, Tbl} = dets:open_file(?MODULE, [{file, BinLog}, {keypos, 2}]),
+
+    error_logger:info_msg("~p started~n", [?MODULE]),
+    {ok, #st{tbl=Tbl}}.
 
 
 handle_call({req, #tlog{}=Tlog}, _F, #st{tbl=Tbl}=St) ->
