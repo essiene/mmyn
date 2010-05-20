@@ -1,0 +1,19 @@
+Application
+ |
+RootSup (one_for_one)
+ |
+[WebService, ..., BackOffSup (rest_for_one)]
+                     |
+                    [BackOff, TxGroupSup(rest_for_one), RxGroupSup(rest_for_one)]
+                                 |                              |
+                                 |                         [RxQ, RxEsmeSup, RxEsmeNanny, RxWkSup, RxWkNanny]
+                                 |                           |                      |
+                                 |                          rxesme                 rxwk
+                                 |
+                                 |
+                      [TxQ, TxSup, TxNanny]
+                             |
+                            tx
+
+
+

@@ -1,5 +1,4 @@
 * Make use of erlcfg
-* Make use of log4erl?
 * add commands to simreg script via nodetool:
     start/stop/status tx_nanny
     start/stop/status rx_nanny
@@ -25,23 +24,13 @@
 
 * Log and track:
     webservice transactions 
-    esmerx transactions
 
-    For these, make them different from the actual business logic optional
-    logging
-
-* Proposal for esmerx logging. Also some more ideas:
-     -> Node|Tid|Tstmp | RxId|RxPid | Sn|Src|Dst|ShortMessage | Callback|
-     <- Node|Tid|Tstmp | Code|Msg|Extra| 
-
-* implement a pluggin framework in the rx module that allows the
+* Fully flesh out the mini pluggin framework in the rx module to allow the
   rx to notify all registered callbacks, instead of just the one
-  callback.
+  callback. This should be a gen_event based framework
 
-  In this framework, define an gen_sms behaviour that all plugins
-  will implement. This gen_sms behaviour module will also export
-  gen_sms:send(Src, Dst, Msg), which will use preconfigured defaults
-  for the plugin for the remaining #submit_sm{} parameters
+* implement gen_sms_handler:send(Src, Dst, Msg) which will use 
+  preconfigured defaults for the plugin for the remaining #submit_sm{} parameters
 
 * esmerx should implement a routing table:
         {Dst, SEPARATOR} -> Callback |
@@ -53,13 +42,6 @@
         {http, http://foo..areas/, get, json}
         {http, http://.../, post, xml}
 
-* esmerx should have multiple callbacks and only notify them per route
-  registration, multiple callbacks should be able to register for multiple
-  routes.
-
-
-* Investigate implementing this infrastructure as a gen_event manager and their
-  gen_event handlers. 
 
 * Support global configs for all tx/rx and per instance configuration
   overriding, this would allow, different one application to use say multiple
