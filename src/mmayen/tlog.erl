@@ -92,5 +92,35 @@ tid() ->
     {MegaSecs, Secs, MicroSecs} = now(),
     lists:flatten(io_lib:format("~6.10.0B~6.10.0B~6.10.0B", [MegaSecs, Secs, MicroSecs])).
 
-dtstmp() ->
-    calendar:universal_time().
+to_string(#tlog{tid=Tid, rxid=Rxid, rxpid=RxPid, smsc=Smsc, port=Port,
+        system_id=SystemId, handler=Handler, req=Req, res=Res}) ->
+
+    #req{datetime=DateTime0, seqnum=Seqnum, src=RqSrc, dst=RqDst, msg=RqMsg} = Req,
+    #res{rt=Rt0, src=RsSrc, dst=RsDst, msg=RsMsg, status=Status, op=Op0, code=Code0, detail=Detail, extra=Extra} = Res,
+
+    DateTime1 = calendar:now_to_universal_time(DateTime0),
+    DateTime = httpd_util:rfc1123_date(DateTime1),
+
+    ToString = fun (X) ->
+        case X of
+               N when is_integer(N) ->
+                    integer_to_list(N);
+               N ->
+                 N
+        end
+    end,
+
+    MicroToMilliSecs = fun (X) ->
+        X/1000
+    end,
+
+    Rt = MicroToMilliSecs(Rt0),
+    Op = ToString(Op0),
+    Code = ToString(Code0),
+
+
+
+    lists:flatten(io_lib:format("~s|~s|~.2f|~p|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~p|~s|~b|~s|~p|~p", [Tid, DateTime, Rt, Rxid, 
+            RqSrc, RqDst, RqMsg, RsSrc, RsDst, RsMsg, Handler, Status, Op, Code, Detail, 
+            Extra, Smsc, Port, SystemId, Seqnum, RxPid])).
+
