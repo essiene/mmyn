@@ -1,28 +1,35 @@
 -module(puk).
--export([get/1]).
+-export([get/2]).
 
 -include("simreg.hrl").
 
-get(Msisdn) ->
+get(Tid, Msisdn) ->
     Auth = string:concat("Basic ", base64:encode_to_string("eaitest:1eaitest")),
-    Req0 = "<soapenv:Envelope 
+    Req = "<soapenv:Envelope 
                 xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" 
                 xmlns:ws=\"http://mtnn/eai/sv/ws\" 
                 xmlns:get=\"http://eai.mtn.ng/sv/getprodinstdetails\"> 
                     <soapenv:Header> 
-                        <ws:Header><get:Header></get:Header> </ws:Header> 
+                        <ws:Header>
+                            <get:Header>
+                                <get:TransactionID>"
+                                    ++ Tid ++ 
+                                "</get:TransactionID>
+                                <get:ServiceInterface>SingleView</get:ServiceInterface>
+                                <get:ServiceOperation>GetProdInstDetails</get:ServiceOperation>
+                            </get:Header>
+                        </ws:Header> 
                    </soapenv:Header> 
                    <soapenv:Body> 
                         <ws:clientRequest>
                             <get:GetProdInstDetailsRequest> 
-                                <get:MSISDN>",
-    Req1 = string:concat(Req0, Msisdn),
-    
-    Req2 = string:concat(Req1, "</get:MSISDN> 
+                                <get:MSISDN>"
+                                    ++ Msisdn ++
+                                "</get:MSISDN> 
                             </get:GetProdInstDetailsRequest> 
                         </ws:clientRequest> 
                     </soapenv:Body> 
-                </soapenv:Envelope>"),
+                </soapenv:Envelope>",
 
     {ok, Url} = application:get_env(soap_url_puk),
     util:soap_request(Url, [
@@ -31,7 +38,7 @@ get(Msisdn) ->
             {"User-Agent", "Mmayen/1.0"},
             {"Authorization", Auth}, 
             {"Content-Type", "text/xml"}],
-            Req2, fun parse/1, puk).
+            Req, fun parse/1, puk).
 
 parse(Xml) when is_list(Xml) ->
     {ok, Response, _Tail} = erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process/2),

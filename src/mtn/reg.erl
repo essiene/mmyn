@@ -1,28 +1,37 @@
 -module(reg).
 -include("simreg.hrl").
 
--export([get/1]).
+-export([get/2]).
 
 
 
-get(Msisdn) ->
+get(Tid, Msisdn) ->
     Auth = string:concat("Basic ", base64:encode_to_string("eaitest:1eaitest")),
-    Req0 = "<soapenv:Envelope 
+    Req = "<soapenv:Envelope 
                 xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" 
                 xmlns:ws=\"http://mtnn/eai/cis/ws\" 
                 xmlns:sys=\"http://eai.mtn.ng/cis/SystemCISExtension\"> 
-                    <soapenv:Header/> 
+                    <soapenv:Header> 
+                        <ws:Header>
+                            <get:Header>
+                                <get:TransactionID>"
+                                    ++ Tid ++ 
+                                "</get:TransactionID> 
+                                <get:ServiceInterface>CIS</get:ServiceInterface>
+                                <get:ServiceOperation>VerifySubscriber</get:ServiceOperation> 
+                            </get:Header> 
+                        </ws:Header> 
+                    </soapenv:Header> 
                     <soapenv:Body> 
                         <ws:VerifySubscriber> 
-                            <sys:VerifySubscriberRequest>
-                                <sys:SVCNo>",
-    Req1 = string:concat(Req0, Msisdn),
-    
-    Req2 = string:concat(Req1, "</sys:SVCNo> 
+                            <sys:VerifySubscriberRequest> 
+                                <sys:SVCNo>"
+                                    ++ Msisdn ++
+                                "</sys:SVCNo> 
                             </sys:VerifySubscriberRequest> 
                         </ws:VerifySubscriber> 
                     </soapenv:Body> 
-            </soapenv:Envelope>"),
+            </soapenv:Envelope>",
 
     {ok, Url} = application:get_env(soap_url_reg),
     util:soap_request(Url, [
@@ -31,7 +40,7 @@ get(Msisdn) ->
             {"User-Agent", "Mmayen/1.0"},
             {"Authorization", Auth}, 
             {"Content-Type", "text/xml"}],
-            Req2, fun parse/1, reg).
+            Req, fun parse/1, reg).
 
 parse(Xml) when is_list(Xml) ->
     {ok, Response, _Tail} = erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process/2),
