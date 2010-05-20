@@ -61,7 +61,12 @@ handle_call({status, Tid, Now, #res{}=Res0}, _F, #st{tbl=Tbl}=St) ->
             ResponseTime = timer:now_diff(Now, DtStmp),
             Res = Res0#res{rt=ResponseTime},
             Tlog = Tlog0#tlog{res=Res},
-            ok = dets:insert(Tbl, Tlog),
+
+            TlogStr = to_string(Tlog),
+
+            ok = log4erl:log(?LOGGER, debug, "~s", [TlogStr]),
+            dets:delete(Tbl, Tlog#tlog.tid),
+
             {reply, ok, St};
         {error, Reason} ->
             {stop, Reason}
