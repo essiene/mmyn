@@ -1,2 +1,1 @@
 - Split sms keyword on ALL whitespace, not just SPACE
-- Strip off leading and trailing whitespace before splitting SMS keywords

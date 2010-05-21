@@ -103,7 +103,8 @@ terminate(Reason, #st{id=Id}) ->
 code_change(_OldVsn, St, _Extra) ->
     {noreply, St}.
 
-preprocess(Msg) ->
+preprocess(Msg0) ->
+    Msg = string:strip(Msg0),
     Lower = string:to_lower(Msg),
     {ok, string:tokens(Lower, " ")}.
 
