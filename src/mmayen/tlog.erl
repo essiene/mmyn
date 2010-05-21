@@ -104,7 +104,7 @@ to_string(#tlog{tid=Tid, rxid=Rxid, rxpid=RxPid, smsc=Smsc, port=Port,
     #req{datetime=DateTime0, seqnum=Seqnum, src=RqSrc, dst=RqDst, msg=RqMsg} = Req,
     #res{rt=Rt0, src=RsSrc, dst=RsDst, msg=RsMsg, status=Status, op=Op0, code=Code0, detail=Detail, extra=Extra} = Res,
 
-    DateTime1 = calendar:now_to_universal_time(DateTime0),
+    DateTime1 = calendar:now_to_local_time(DateTime0),
     DateTime = httpd_util:rfc1123_date(DateTime1),
 
     ToString = fun (X) ->
