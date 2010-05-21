@@ -13,13 +13,13 @@ get(Tid, Msisdn) ->
                 xmlns:sys=\"http://eai.mtn.ng/cis/SystemCISExtension\"> 
                     <soapenv:Header> 
                         <ws:Header>
-                            <get:Header>
-                                <get:TransactionID>"
+                            <sys:Header>
+                                <sys:TransactionID>"
                                     ++ Tid ++ 
-                                "</get:TransactionID> 
-                                <get:ServiceInterface>CIS</get:ServiceInterface>
-                                <get:ServiceOperation>VerifySubscriber</get:ServiceOperation> 
-                            </get:Header> 
+                                "</sys:TransactionID> 
+                                <sys:ServiceInterface>CIS</sys:ServiceInterface>
+                                <sys:ServiceOperation>VerifySubscriber</sys:ServiceOperation> 
+                            </sys:Header> 
                         </ws:Header> 
                     </soapenv:Header> 
                     <soapenv:Body> 
