@@ -38,35 +38,35 @@ get(Tid, Msisdn) ->
             {"User-Agent", "Mmayen/1.0"},
             {"Authorization", Auth}, 
             {"Content-Type", "text/xml"}],
-            Req, fun parse/1, puk).
+            Req, fun parse_get_response/1, puk).
 
-parse(Xml) when is_list(Xml) ->
-    {ok, Response, _Tail} = erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process/2),
+parse_get_response(Xml) when is_list(Xml) ->
+    {ok, Response, _Tail} = erlsom:parse_sax(list_to_binary(Xml), #soap_response{}, fun process_get_response/2),
     Response.
 
 
 
-process(endDocument, Res) ->
+process_get_response(endDocument, Res) ->
     Res#soap_response{flag=undefined};
-process({characters, X}, #soap_response{flag='STATUS'}=Res) ->
+process_get_response({characters, X}, #soap_response{flag='STATUS'}=Res) ->
     Rc = list_to_integer(X),
     Res#soap_response{status=Rc, flag=undefined};
-process({characters, X}, #soap_response{flag='ERRMSG'}=Res) ->
+process_get_response({characters, X}, #soap_response{flag='ERRMSG'}=Res) ->
     Res#soap_response{message=X, flag=undefined};
-process({characters, "SIM Card"}, #soap_response{flag='EQUIPMENT'}=Res) ->
+process_get_response({characters, "SIM Card"}, #soap_response{flag='EQUIPMENT'}=Res) ->
     Res#soap_response{flag='READ_PUK'};
-process({characters, X}, #soap_response{flag='PUK'}=Res) ->
+process_get_response({characters, X}, #soap_response{flag='PUK'}=Res) ->
     % TODO: are we in danger of string manipulation/ code injection here?
     {ok, Fmt} = application:get_env(msg_puk_get),
     Msg = lists:flatten(io_lib:format(Fmt, [X])),
     Res#soap_response{message=Msg, flag=undefined};
-process({startElement, _, "returnCode", _, _}, Res) ->
+process_get_response({startElement, _, "returnCode", _, _}, Res) ->
     Res#soap_response{flag='STATUS'};
-process({startElement, _, "codeDescription", _, _}, Res) ->
+process_get_response({startElement, _, "codeDescription", _, _}, Res) ->
     Res#soap_response{flag='ERRMSG'};
-process({startElement, _, "EQUIPMENT_TYPE_NAME", _, _}, Res) ->
+process_get_response({startElement, _, "EQUIPMENT_TYPE_NAME", _, _}, Res) ->
     Res#soap_response{flag='EQUIPMENT'};
-process({startElement, _, "PUK", _, _}, #soap_response{flag='READ_PUK'}=Res) ->
+process_get_response({startElement, _, "PUK", _, _}, #soap_response{flag='READ_PUK'}=Res) ->
     Res#soap_response{flag='PUK'};
-process(_, Accm) ->
+process_get_response(_, Accm) ->
     Accm.
