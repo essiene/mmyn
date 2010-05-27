@@ -69,17 +69,12 @@ handle_sms(_, _, "789", ["help" | _], _, St) ->
     St};
 
 
-handle_sms(_, _, "789", ["puk", _PUK | _], _, St) ->
-    {ok, Msg} = application:get_env(msg_puk_put),
+handle_sms(_, _, "789", ["puk" | _], _, St) ->
+    {ok, Msg} = application:get_env(msg_puk),
     {reply,
         {?SMS_SRC, Msg},
         {ok, {pukset, 0}},
     St};
-
-handle_sms(Tid, Msisdn, "789", ["puk" | _], _, St) ->
-    Res = puk:get(Tid, Msisdn),
-    log(Tid, Res),
-    sms_response(St, Res);
 
 handle_sms(Tid, _, "789", ["reg" , Msisdn0 | _], _, St) ->
     Msisdn1 = msisdn_strip(Msisdn0, 5),

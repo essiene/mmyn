@@ -8,7 +8,7 @@
             txq, tx_sup, nanny, esmetx, 
             rx_sup, esmerx, 
             simreg_misultin, simreg,
-            puk, reg, sms, simreg_services,
+            reg, sms, simreg_services,
             simregctl, util, gen_sms_handler,
             tlog
         ]
