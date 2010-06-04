@@ -14,6 +14,8 @@ get(Tid, Msisdn) ->
                     <soapenv:Header> 
                         <ws:Header>
                             <sys:Header>
+                                <sys:UserId>simreg</sys:UserId>
+                                <sys:System>simreg</sys:System>
                                 <sys:TransactionID>"
                                     ++ Tid ++ 
                                 "</sys:TransactionID> 
