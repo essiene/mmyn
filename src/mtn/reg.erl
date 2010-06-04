@@ -1,7 +1,7 @@
 -module(reg).
 -include("simreg.hrl").
 
--export([get/2]).
+-export([get/2, date_str/0]).
 
 
 
@@ -28,6 +28,9 @@ get(Tid, Msisdn) ->
                                 <sys:SVCNo>"
                                     ++ Msisdn ++
                                 "</sys:SVCNo> 
+                                <sys:Date>"
+                                    ++ date_str() ++
+                                "</sys:Date>
                             </sys:VerifySubscriberRequest> 
                         </ws:VerifySubscriber> 
                     </soapenv:Body> 
@@ -61,3 +64,7 @@ process({startElement, _, "ErrorMessage", _, _}, Res) ->
     Res#soap_response{flag='ERRMSG'};
 process(_, Accm) ->
     Accm.
+
+date_str() ->
+    {{Yyyy,M,D},_} = calendar:now_to_local_time(now()),
+    lists:flatten(io_lib:format("~4.10.0B-~2.10.0B-~2.10.0B", [Yyyy,M,D])).
