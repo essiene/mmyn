@@ -60,7 +60,7 @@ process({characters, X}, #soap_response{flag='STATUS'}=Res) ->
     Res#soap_response{status=Rc, flag=undefined};
 process({characters, X}, #soap_response{flag='ERRMSG'}=Res) ->
     Res#soap_response{message=X, flag=undefined};
-process({startElement, _, "ErrorCode", _, _}, Res) ->
+process({startElement, _, "Status", _, _}, Res) ->
     Res#soap_response{flag='STATUS'};
 process({startElement, _, "ErrorMessage", _, _}, Res) ->
     Res#soap_response{flag='ERRMSG'};
