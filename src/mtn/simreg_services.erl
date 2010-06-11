@@ -159,12 +159,6 @@ sms_response(St, #soap_response{status=0, message=Msg, op=Op}) ->
         {ok, {Op, 0}},
     St};
 
-sms_response(St, #soap_response{status=100, op=reg=Op, message=Msg}) ->
-    {reply,
-        {?SMS_SRC, Msg},
-        {ok, {Op, 0}},
-    St};
-
 sms_response(St, #soap_response{status=N, message=Msg, op=Op}) ->
     {reply,
         {?SMS_SRC, ?MSG_SVC_UNAVAIL},
