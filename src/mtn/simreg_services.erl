@@ -111,28 +111,37 @@ msisdn_strip(Msisdn, MinLen) when is_list(Msisdn), is_integer(MinLen) ->
 msisdn_strip(Msisdn, _) ->
     binary_to_list(Msisdn).
 
+% If no error occurs, web service will
+% return Status, but if an error occurs,
+% Status will not be returned and will
+% thus be undefined.
+%
+% As long as we have a value for status, we
+% are okay.
+
 get_reg_status(To, Tid, Msisdn) ->
     case reg:get(Tid, Msisdn) of
         #soap_response{status=3}=R ->
             log(Tid, R),
             {ok, Fmt} = application:get_env(msg_reg_get_ok),
             Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
-            sms_response(To, R#soap_response{message=Msg});
+			% we have to set status back to 0 else sms_response will see it as an error            
+			sms_response(To, R#soap_response{status=0, message=Msg}); 
         #soap_response{status=-1}=R ->
             log(Tid, R),
             {ok, Fmt} = application:get_env(msg_reg_get_fail),
             Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
-            sms_response(To, R#soap_response{message=Msg});
+            sms_response(To, R#soap_response{status=0, message=Msg});
         #soap_response{status=1}=R ->
             log(Tid, R),
             {ok, Fmt} = application:get_env(msg_reg_get_pending),
             Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
-            sms_response(To, R#soap_response{message=Msg});
+            sms_response(To, R#soap_response{status=0, message=Msg});
         #soap_response{status=25}=R ->
             log(Tid, R),
             {ok, Fmt} = application:get_env(msg_reg_get_pending),
             Msg = lists:flatten(io_lib:format(Fmt, [Msisdn])),
-            sms_response(To, R#soap_response{message=Msg});
+            sms_response(To, R#soap_response{status=0, message=Msg});
         R ->
             log(Tid, R),
             sms_response(To, R)
