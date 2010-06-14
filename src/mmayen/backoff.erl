@@ -41,16 +41,9 @@ increment() ->
 
 
 init([]) ->
-    {ok, Filename} = application:get_env(backoff_store),
-
-    case dets:open_file(?MODULE, [{file, Filename}, {keypos, 2}]) of
-        {ok, Tbl} -> 
-            error_logger:info_msg("~p started~n", [?MODULE]),
-            {ok, #st{tbl=Tbl}};
-        {error, Reason} ->
-            error_logger:info_msg("~p failed to start for reason ~p~n", [?MODULE, Reason]),
-            {stop, Reason}
-    end.
+    Tbl = ets:new(?MODULE, [set, private, {keypos, 2}]), 
+	error_logger:info_msg("~p started~n", [?MODULE]), 
+	{ok, #st{tbl=Tbl}}.
 
 handle_call({register, #spec{pid=Pid}=S}, _F, #st{tbl=Tbl}=St) ->
     error_logger:info_msg("Recieved registration request from ~p~n", [Pid]),
@@ -147,14 +140,14 @@ backoff_normal(#spec{min=Min, dlta=Delta}=S) ->
 backoff(Tbl, #spec{}=S0, Fun) ->
     case Fun(S0) of
         {ok, S} -> 
-            dets:insert(Tbl, S), 
+            ets:insert(Tbl, S), 
             ok;
         {error, Reason} ->
             {error, Reason}
     end;
 
 backoff(Tbl, Pid, Fun) ->
-    case dets:lookup(Tbl, Pid) of
+    case ets:lookup(Tbl, Pid) of
         [] ->
             {error, not_registered};
         [#spec{}=S] ->
@@ -162,4 +155,4 @@ backoff(Tbl, Pid, Fun) ->
     end.
 
 deregister(Tbl, Pid) ->
-	dets:delete(Tbl, Pid).
+	ets:delete(Tbl, Pid).
