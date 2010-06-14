@@ -49,3 +49,5 @@
   eventually be able to send this to a console viewer or to a web client viewer
 
 * Provide view into running nannys too
+
+* Receive into a work queue as well, instead of tieing down the rx channels
