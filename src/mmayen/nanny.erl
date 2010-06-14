@@ -28,13 +28,14 @@ init([Id, {EnvChildren, EnvBackoff}, StartMf, StopMf, {WakeMf, WakeThreshold}]) 
     process_flag(trap_exit, true),
 
     {ok, Count} = application:get_env(EnvChildren),
-    {ok, {Min, Max, Delta}=BackOff} = application:get_env(EnvBackoff),
+    {ok, {Min, Max, Delta}} = application:get_env(EnvBackoff),
 
     Tid = ets:new(Id, [set, private]),
     tag_and_load(Tid, Count),
-    case backoff:register(Min, Max, Delta, {?MODULE, babysit_all, [Id]}) of
+	BackoffMfa = {?MODULE, babysit_all, [Id]},
+    case backoff:register(Min, Max, Delta, BackoffMfa) of
         ok -> 
-            {ok, idle, #st{ets=Tid, backoff=BackOff, id=Id, start_mf=StartMf,
+            {ok, idle, #st{ets=Tid, backoff={Min, Max, Delta, BackoffMfa}, id=Id, start_mf=StartMf,
                               stop_mf=StopMf, wake_mf=WakeMf,
                               wake_threshold=WakeThreshold}};
         {error, Reason} ->
@@ -116,14 +117,14 @@ active(R, _F, St) ->
 
 % Privates
 
-babysit(#st{}=St) ->
+babysit(#st{backoff={Min,Max,Delta,Mfa}}=St) ->
     Count = start_all(St),
     case Count of
         0 -> 
-            ok = backoff:regular(),
+            ok = backoff:regular(Min,Max,Delta,Mfa),
             {next_state, idle, St};
         N ->
-            ok = backoff:increment(),
+            ok = backoff:increment(Min,Max,Delta,Mfa),
             {next_state, active, St#st{count=N}}
     end.
 
