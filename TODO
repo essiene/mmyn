@@ -12,15 +12,9 @@
 
 * Pull out all other constants into config file
 * Stopping the application does not clean-up the esme's properly :(
-* backoff DETS garbage collection
 * When nanny goes down, take down your kids dammit!!!
   alternatively, find a way to make it such that a new nanny
   will discover the kids which are still alive,
-
-* In backoff, instead of using a DETS, still use an ETS, but implement
-  dynamic registration, so a client can register if its not already 
-  registered and see if its possible to also let a backoff module
-  discover clients who want its services... 
 
 * Log and track:
     webservice transactions 
