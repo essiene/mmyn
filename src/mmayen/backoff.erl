@@ -5,7 +5,8 @@
 
 -export([start_link/0, status/0, stop/0]).
 
--export([register/4, deregister/0, regular/0, increment/0]).
+-export([register/4, deregister/0, regular/0, 
+		regular/4, increment/0, increment/4]).
 
 -record(st, {tbl}).
 -record(spec, {pid, max, min, dlta, mfa, tref, cur, cur_dlta}).
@@ -23,6 +24,22 @@ stop() ->
 
 register(Min, Max, Delta, Mfa) ->
     gen_server:call(?MODULE, {register, #spec{pid=self(), max=Max, min=Min, dlta=Delta, mfa=Mfa}}).
+
+regular(Min, Max, Delta, Mfa) ->
+	case regular() of
+		{error, not_registered} ->
+			register(Min, Max, Delta, Mfa);
+		Other ->
+			Other
+	end.
+
+increment(Min, Max, Delta, Mfa) ->
+	case increment() of
+		{error, not_registered} ->
+			register(Min, Max, Delta, Mfa);
+		Other ->
+			Other
+	end.
 
 deregister() ->
     try gen_server:call(?MODULE, {deregister, self()}) 
