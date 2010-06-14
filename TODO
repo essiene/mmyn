@@ -51,8 +51,7 @@
   the entire application with its own seperate configuration, running still
   inside one vm instance.
 
-* Start employing erlang:monitor/2 across board to handle garbage collection of
-  dead/dying procs:
-    * nanny's need to deregister their dying kids so when the new ones
-      come back, they can replace them cleanly.
-    * other such shenanigans :)
+* Provide view into backoff module. Basically, see inside its State and
+  eventually be able to send this to a console viewer or to a web client viewer
+
+* Provide view into running nannys too
