@@ -46,9 +46,11 @@ init([Id]) ->
 
 handle_bind(Smpp, #st{id=Id, esmetx_backoff={Min, Max, Delta}}=St) ->
     error_logger:info_msg("[~p] Transmitter ~p bound~n", [self(), Id]),
-    ok = backoff:register(Min, Max, Delta, {?MODULE, check_and_send, [self()]}),
+	Mfa = {?MODULE, check_and_send, [self()]},
+	Backoff = {Min, Max, Delta, Mfa},
+    ok = backoff:register(Min, Max, Delta, Mfa),
     error_logger:info_msg("[~p] Transmitter ~p registered with backoff~n", [self(), Id]),
-    {noreply, St#st{smpp=Smpp}}.
+    {noreply, St#st{smpp=Smpp, esmetx_backoff=Backoff}}.
 
 handle_pdu(Pdu, #st{id=Id}=St) ->
     error_logger:info_msg("[~p] Transmitter ~p has received PDU: ~p~n", [self(), Id, Pdu]),
@@ -60,8 +62,8 @@ handle_unbind(_Pdu, St) ->
 handle_call(Req, _From, St) ->
     {reply, {error, Req}, St}.
 
-handle_cast(wake, #st{awake=false}=St) ->
-    ok = backoff:regular(),
+handle_cast(wake, #st{awake=false, esmetx_backoff={Min,Max,Delta,Mfa}}=St) ->
+    ok = backoff:regular(Min, Max, Delta, Mfa),
     {noreply, St#st{awake=true}};
 
 handle_cast(wake, #st{awake=true}=St) ->
@@ -72,16 +74,17 @@ handle_cast(stop, #st{id=Id}=St) ->
     error_logger:info_msg("[~p] Transmitter ~p has deregistered from backoff~n", [self(), Id]),
     {stop, normal, St#st{awake=false}};
 
-handle_cast(check_and_send, #st{smpp=Smpp, id=Id}=St) ->
+handle_cast(check_and_send, #st{smpp=Smpp, id=Id,
+		esmetx_backoff={Min,Max,Delta,Mfa}}=St) ->
     case txq:pop() of 
         '$empty' ->
             error_logger:info_msg("[~p] Transmitter ~p found no tx req to send~n", [self(), Id]),
-            ok = backoff:increment(),
+            ok = backoff:increment(Min,Max,Delta,Mfa),
             {noreply, St#st{awake=false}};
         #txq_req{src=Src, dst=Dest, message=Msg} ->
             smpp:send(Smpp, #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}),
             error_logger:info_msg("[~p] Transmitter ~p has sent tx req: ~p ~p ~p~n", [self(), Id, Src, Dest, Msg]),
-            ok = backoff:regular(),
+            ok = backoff:regular(Min,Max,Delta,Mfa),
             {noreply, St#st{awake=true}}
     end;
 
