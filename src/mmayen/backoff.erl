@@ -54,13 +54,18 @@ init([]) ->
 
 handle_call({register, #spec{pid=Pid}=S}, _F, #st{tbl=Tbl}=St) ->
     error_logger:info_msg("Recieved registration request from ~p~n", [Pid]),
-    {reply, backoff(Tbl, S, fun backoff/1), St};
+	case Res = backoff(Tbl, S, fun backoff/1) of
+		ok ->
+			erlang:monitor(process, Pid);
+		{error, _} ->
+			ok
+	end,
+    {reply, Res, St};
 
 
 handle_call({deregister, Pid}, _F, #st{tbl=Tbl}=St) ->
     error_logger:info_msg("Recieved de-registration request from ~p~n", [Pid]),
-    dets:delete(Tbl, Pid),
-    {reply, dets:delete(Tbl, Pid), St};
+    {reply, deregister(Tbl, Pid), St};
 
 handle_call({regular, Pid}, _F, #st{tbl=Tbl}=St) ->
     error_logger:info_msg("Recieved regular-backoff request from ~p~n", [Pid]),
@@ -85,6 +90,10 @@ handle_call(R, _F, St) ->
 handle_cast(_R, St) ->
     {noreply, St}.
 
+handle_info({'DOWN', _, process, Pid, Reason}, #st{tbl=Tbl}=St) ->
+	error_logger:info_msg("Received 'DOWN' message for process ~p. Reason: ~p~n", [Pid, Reason]),
+	deregister(Tbl, Pid),
+	{noreply, St};
 
 handle_info(_R, St) ->
     {noreply, St}.
@@ -151,3 +160,6 @@ backoff(Tbl, Pid, Fun) ->
         [#spec{}=S] ->
             backoff(Tbl, S, Fun)
     end.
+
+deregister(Tbl, Pid) ->
+	dets:delete(Tbl, Pid).
