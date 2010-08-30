@@ -17,6 +17,9 @@ push(Item) ->
 pop() ->
     gen_server:call(?MODULE, pop).
 
+ping() ->
+	gen_server:call(?MODULE, ping).
+
 
 init([]) ->
     {ok, #st{q=queue:new()}}.
@@ -32,6 +35,10 @@ handle_call(pop, _F, #st{q=Q}=St) ->
         {{value, V}, Q1} ->
             {reply, V, St#st{q=Q1}}
     end;
+
+handle_call(ping, _F, #st{q=Q}=St) ->
+	Len = queue:len(Q),
+	{reply, {pong, [{len, Len}]}, St};
 
 handle_call(R, _F, St) ->
     {reply, {error, {illegal_request, R}}, St}.
