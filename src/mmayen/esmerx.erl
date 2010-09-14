@@ -1,5 +1,5 @@
 -module(esmerx).
--behaviour(gen_esme).
+-behaviour(gen_esme34).
 -include("simreg.hrl").
 -include("tlog.hrl").
 
@@ -7,79 +7,75 @@
         handle_call/3,
         handle_cast/2,
         handle_info/2,
-        handle_bind/2,
-        handle_unbind/2,
-        handle_pdu/2,
+        handle_rx/2,
+		handle_tx/2,
         terminate/2,
         code_change/3]).
 
 -export([start_link/1, start/1, stop/1]).
 
--record(st, {host, port, system_id, password, smpp, callback, id,
+-record(st, {host, port, system_id, password, callback, id,
         notify_msisdns, notify_sender}).
 -record(cb, {mod, st, ready=false}).
 
 
 start_link(Id) ->
-    gen_esme:start_link(?MODULE, [simreg_services, Id], []).
+    gen_esme34:start_link(?MODULE, [simreg_services, Id], []).
 
 start(Id) ->
-    gen_esme:start(?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD, simreg_services, Id], []).
+    gen_esme34:start(?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD, simreg_services, Id], []).
 
 stop(Pid) ->
-    gen_esme:cast(Pid, stop).
+    gen_esme34:cast(Pid, stop).
 
-init([Callback, Id]) ->
+init([CbMod, Id]) ->
     {Host, Port, SystemId, Password} = util:smsc_params(),
     {NotifyMsisdns, NotifySender} = util:notify_params(),
-    {ok, {Host, Port, 
-            #bind_receiver{system_id=SystemId, password=Password}}, 
-            #st{host=Host, port=Port, system_id=SystemId, password=Password,
-                callback=#cb{mod=Callback}, id=Id, notify_msisdns=NotifyMsisdns,
-            notify_sender=NotifySender}}.
 
-handle_bind(Smpp, #st{id=Id, callback=#cb{mod=CbMod}=Cb}=St0) ->
-    error_logger:info_msg("[~p] Receiver ~p bound~n", [self(), Id]),
-    St1 = St0#st{smpp=Smpp},
     case CbMod:init() of
         {ok, CbState} ->
-            {noreply, St1#st{callback=Cb#cb{st=CbState, ready=true}}};
+    		{ok, 
+				{Host, Port, #bind_receiver{system_id=SystemId, password=Password}}, 
+				#st{host=Host, port=Port, system_id=SystemId, password=Password, 
+					callback=#cb{mod=CbMod, st=CbState, ready=true}, id=Id, notify_msisdns=NotifyMsisdns, 
+					notify_sender=NotifySender}};
         {stop, Reason} ->
             error_logger:error_report("[~p] Callback module ~p failed to initialize with reason: ~p~n", [self(), Reason]),
-            {noreply, St1}
+			{stop, Reason}
     end.
 
-handle_pdu(#pdu{body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_message=Msg}}=Pdu, 
+handle_tx(_Body, St) ->
+	{noreply, St}. 
+
+
+handle_rx(#pdu{sequence_number=Snum, body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_message=Msg}}=Pdu, 
         #st{callback=#cb{mod=CbMod, st=CbSt, ready=true}=Cb, id=Id}=St) ->
     error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
     {ok, WordList} = preprocess(Msg),
 
     error_logger:info_msg("[~p] Receiver ~p is calling callback ~p~n", [self(), Id, CbMod]),
     Tid = log_req(St, Pdu),
+
+	DeliverSmResp = #deliver_sm_resp{message_id=Tid},
+
     case CbMod:handle_sms(Tid, Src, Dst, WordList, Pdu, CbSt) of
        {noreply, Status, CbSt1} ->
             log_status(Tid, Status),
             notify(St, Status),
-            {noreply, St#st{callback=Cb#cb{st=CbSt1}}};
+            {tx, {?ESME_ROK, Snum, DeliverSmResp}, St#st{callback=Cb#cb{st=CbSt1}}};
         {reply, Reply, Status, CbSt1} ->
             log_status(Tid, {Dst, Src, Reply}, Status),
             send(Dst, Src, Reply),
             notify(St, Status),
-            {noreply, St#st{callback=Cb#cb{st=CbSt1}}}
+            {tx, {?ESME_ROK, Snum, DeliverSmResp}, St#st{callback=Cb#cb{st=CbSt1}}}
     end;
 
     
 
-handle_pdu(Pdu, #st{id=Id}=St) ->
+handle_rx(Pdu, #st{id=Id}=St) ->
     error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
     {noreply, St}.
     
-handle_unbind(_Pdu, St) ->
-    {noreply, St}.
-
-handle_call({sendsms, Source, Dest, Msg}, _From, #st{smpp=Smpp}=St) ->
-    S = smpp:send(Smpp, #submit_sm{source_addr=Source, destination_addr=Dest, short_message=Msg}),
-    {reply, S, St};
 handle_call(Req, _From, St) ->
     {reply, {error, Req}, St}.
 
