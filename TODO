@@ -11,7 +11,6 @@
     get statistics on rx tps
 
 * Pull out all other constants into config file
-* Stopping the application does not clean-up the esme's properly :(
 * When nanny goes down, take down your kids dammit!!!
   alternatively, find a way to make it such that a new nanny
   will discover the kids which are still alive,
@@ -51,3 +50,6 @@
 * Provide view into running nannys too
 
 * Receive into a work queue as well, instead of tieing down the rx channels
+
+* Return deliver_sm once the job has been delivered. Do not wait for job to be
+  completed.
