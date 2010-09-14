@@ -4,7 +4,7 @@
         handle_cast/2,handle_info/2,
         terminate/2,code_change/3]).
 
--export([start_link/0, push/1, pop/0]).
+-export([start_link/0, push/1, pop/0, ping/0]).
 
 -record(st, {q}).
 
