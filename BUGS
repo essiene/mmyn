@@ -1,0 +1,3 @@
+On Solaris, simreg start does not start in daemon mode, so I've disabled it in
+the simreg start script. Once we move to R14B, should change this back so we
+don't need to do 'nohup simreg start&' again
