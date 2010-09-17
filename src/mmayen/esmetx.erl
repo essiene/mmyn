@@ -77,9 +77,15 @@ handle_cast(check_and_send, #st{id=Id,
             error_logger:info_msg("[~p] Transmitter ~p found no tx req to send~n", [self(), Id]),
             ok = backoff:increment(Min,Max,Delta,Mfa),
             {noreply, St#st{awake=false}};
-        #txq_req{src=Src, dst=Dest, message=Msg} ->
+        #txq_req{src=Src, dst=Dest, message=Msg, t1=T1}=QItem ->
+			DqTime = now(),
+			Qtime = time_diff(DqTime, T1),
+
 			gen_esme34:transmit_pdu(self(), #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}),
-            error_logger:info_msg("[~p] Transmitter ~p has sent submit_sm req: ~p ~p ~p~n", [self(), Id, Src, Dest, Msg]),
+
+			SendTime = time_diff(now(), DqTime),
+			txq:log(QItem, Id, Qtime, SendTime),
+
             ok = backoff:regular(Min,Max,Delta,Mfa),
             {noreply, St#st{awake=true}}
     end;
@@ -97,3 +103,8 @@ terminate(Reason, #st{id=Id}) ->
 
 code_change(_OldVsn, St, _Extra) ->
     {noreply, St}.
+
+
+time_diff(T2, T1) ->
+	Diff = timer:now_diff(T2, T1),
+	Diff/1000.
