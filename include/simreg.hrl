@@ -4,7 +4,7 @@
 
 -record(soap_response, {status, message, op, flag, raw_req, raw_res}).
 
--record(txq_req, {src, dst, message, t1}).
+-record(txq_req, {src, dst, message, t1, module}).
 
 -define(SMSC_HOST, "10.200.213.4").
 -define(SMSC_PORT, 10000).
