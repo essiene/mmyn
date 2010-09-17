@@ -41,7 +41,6 @@ init([Id]) ->
 	Mfa = {?MODULE, check_and_send, [self()]},
 	Backoff = {Min, Max, Delta, Mfa},
     ok = backoff:register(Min, Max, Delta, Mfa),
-    error_logger:info_msg("[~p] Transmitter ~p registered with backoff~n", [self(), Id]),
 
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
@@ -65,16 +64,14 @@ handle_cast(wake, #st{awake=false, esmetx_backoff={Min,Max,Delta,Mfa}}=St) ->
 handle_cast(wake, #st{awake=true}=St) ->
     {noreply, St};
 
-handle_cast(stop, #st{id=Id}=St) ->
+handle_cast(stop, #st{}=St) ->
     backoff:deregister(),
-    error_logger:info_msg("[~p] Transmitter ~p has deregistered from backoff~n", [self(), Id]),
     {stop, normal, St#st{awake=false}};
 
 handle_cast(check_and_send, #st{id=Id,
 		esmetx_backoff={Min,Max,Delta,Mfa}}=St) ->
     case txq:pop() of 
         '$empty' ->
-            error_logger:info_msg("[~p] Transmitter ~p found no tx req to send~n", [self(), Id]),
             ok = backoff:increment(Min,Max,Delta,Mfa),
             {noreply, St#st{awake=false}};
         #txq_req{src=Src, dst=Dest, message=Msg, t1=T1}=QItem ->
@@ -93,12 +90,10 @@ handle_cast(check_and_send, #st{id=Id,
 handle_cast(_Req, St) ->
     {noreply, St}.
 
-handle_info(Req, #st{id=Id}=St) ->
-    error_logger:info_msg("[~p] Transmitter ~p has recieved a non gen_server request: ~p", [self(), Id, Req]),
+handle_info(_, St) ->
     {noreply, St}.
 
-terminate(Reason, #st{id=Id}) ->
-    error_logger:info_msg("[~p] Transmitter ~p is terminating with reason: ~p~n", [self(), Id, Reason]),
+terminate(_, _) ->
     ok.
 
 code_change(_OldVsn, St, _Extra) ->
