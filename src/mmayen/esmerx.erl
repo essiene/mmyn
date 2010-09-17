@@ -40,7 +40,6 @@ init([CbMod, Id]) ->
 					callback=#cb{mod=CbMod, st=CbState, ready=true}, id=Id, notify_msisdns=NotifyMsisdns, 
 					notify_sender=NotifySender}};
         {stop, Reason} ->
-            error_logger:error_report("[~p] Callback module ~p failed to initialize with reason: ~p~n", [self(), Reason]),
 			{stop, Reason}
     end.
 
@@ -53,7 +52,6 @@ handle_rx(#pdu{sequence_number=Snum, body=#deliver_sm{source_addr=Src, destinati
     error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
     {ok, WordList} = preprocess(Msg),
 
-    error_logger:info_msg("[~p] Receiver ~p is calling callback ~p~n", [self(), Id, CbMod]),
     Tid = log_req(St, Pdu),
 
 	DeliverSmResp = #deliver_sm_resp{message_id=Tid},
@@ -84,16 +82,13 @@ handle_cast(stop, St) ->
 handle_cast(_Req, St) ->
     {noreply, St}.
 
-handle_info(Req, #st{id=Id}=St) ->
-    error_logger:info_msg("[~p] Receiver ~p has recieved a non gen_server request: ~p", [self(), Id, Req]),
+handle_info(_, St) ->
     {noreply, St}.
 
-terminate(Reason, #st{id=Id, callback=#cb{mod=CbMod, st=CbSt, ready=true}}) ->
-    error_logger:info_msg("[~p] Receiver ~p is terminating with reason: ~p~n", [self(), Id, Reason]),
+terminate(Reason, #st{callback=#cb{mod=CbMod, st=CbSt, ready=true}}) ->
     CbMod:terminate(Reason,CbSt),
     ok;
-terminate(Reason, #st{id=Id}) ->
-    error_logger:info_msg("[~p] Receiver ~p is terminating with reason: ~p~n", [self(), Id, Reason]),
+terminate(_, _) ->
     ok.
 
 code_change(_OldVsn, St, _Extra) ->
@@ -117,8 +112,7 @@ notify(_, ok) ->
     ok;
 notify(_, {ok, _}) ->
     ok;
-notify(#st{id=Id, notify_msisdns=MsisdnList, notify_sender=Src}, Error) ->
-    error_logger:info_msg("[~p] Receiver ~p is going to notify: ~p => ~p (~p)~n", [self(), Id, Src, MsisdnList, Error]),
+notify(#st{notify_msisdns=MsisdnList, notify_sender=Src}, Error) ->
     notify(Src, MsisdnList, Error).
 
 notify(_, undefined, _) ->
