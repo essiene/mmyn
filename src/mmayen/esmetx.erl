@@ -6,7 +6,7 @@
         handle_call/3,
         handle_cast/2,
         handle_info/2,
-        handle_tx/2,
+        handle_tx/3,
         handle_rx/2,
         terminate/2,
         code_change/3]).
@@ -47,8 +47,9 @@ init([Id]) ->
             #st{host=Host, port=Port, system_id=SystemId, password=Password,
                 id=Id, esmetx_backoff=Backoff, awake=false}}.
 
-handle_tx(Pdu, St) ->
-	{tx, {?ESME_ROK, Pdu}, St}.
+handle_tx(_, Reply, #st{id=Id}=St) ->
+    error_logger:info_msg("[~p] Transmitter ~p has received reply: ~p~n", [self(), Id, Reply]),
+	{noreply, St}.
 
 handle_rx(Pdu, #st{id=Id}=St) ->
     error_logger:info_msg("[~p] Transmitter ~p has received PDU: ~p~n", [self(), Id, Pdu]),
