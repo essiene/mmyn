@@ -1,16 +1,16 @@
 -module(sms).
 -include("simreg.hrl").
 
--export([send/2, send/3]).
+-export([send/3, send/4]).
 
 -record(req, {status=55, msisdn, message, flag}).
 
 
 
-send(Src, Xml) ->
+send(Src, Xml, Module) ->
     try parse(Xml) of
         #req{status=0, msisdn=Msisdn, message=Message} ->
-            send(Src, Msisdn, Message),
+            send(Src, Msisdn, Message, Module),
             #soap_response{status=0, message="Accepted for delivery"};
         #req{status=N, msisdn=undefined} ->
             #soap_response{status=N, message="MSISDN unspecified"};
@@ -23,8 +23,8 @@ send(Src, Xml) ->
             #soap_response{status=505, message=Message}
     end.
 
-send(Src, Dst, Msg) ->
-    txq:push(#txq_req{src=Src, dst=Dst, message=Msg}),
+send(Src, Dst, Msg, Module) ->
+    txq:push(#txq_req{src=Src, dst=Dst, message=Msg, module=Module}),
     nanny:wake_all(tx_nanny).
 
 
