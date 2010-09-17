@@ -100,13 +100,13 @@ preprocess(Msg0) ->
     {ok, string:tokens(Lower, "\n\t ")}.
 
 send(_, _, {From, To, Reply}) ->
-    sms:send(From, To, Reply);
+    sms:send(From, To, Reply, esmerx);
 
 send(_, To, {From, Reply}) ->
-    sms:send(From, To, Reply);
+    sms:send(From, To, Reply, esmerx);
 
 send(From, To, Reply) ->
-    sms:send(From, To, Reply).
+    sms:send(From, To, Reply, esmerx).
 
 notify(_, ok) ->
     ok;

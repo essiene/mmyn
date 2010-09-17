@@ -80,7 +80,7 @@ get(["send"], Req) ->
     {"to", Dst} = proplists:lookup("to", QueryString),
     {"msg", Msg} = proplists:lookup("msg", QueryString),
 
-    ok = sms:send("SimReg", Dst, Msg),
+    ok = sms:send("SimReg", Dst, Msg, simreg_misultin),
 
     Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n");
 
@@ -89,7 +89,7 @@ get(Other, Req) ->
     Req:respond(404, "Foo Found\r\n").
 
 post(["sendsms"], Req) ->
-    #soap_response{status=Status, message=Message} = sms:send("SimReg", Req:get(body)),
+    #soap_response{status=Status, message=Message} = sms:send("SimReg", Req:get(body), simreg_misultin),
     Xml0 = io_lib:format(?SENDSMS_RESPONSE_TEMPLATE, [Status, Message]),
     Xml1 = lists:flatten(Xml0),
     error_logger:info_msg("Response: ~p~n", [Xml1]),
