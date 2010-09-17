@@ -1,5 +1,6 @@
 -module(util).
--export([soap_request/5, smsc_params/0, sms_format_msg/2, notify_params/0]).
+-export([soap_request/5, smsc_params/0, sms_format_msg/2, notify_params/0,
+		replace/3]).
 
 -include("simreg.hrl").
 
@@ -50,3 +51,7 @@ sms_format_msg(Fmt, Args) ->
             S0 = string:substr(S, 1, ?SMS_MSG_MAX_LEN),
             S0 ++ "..."
     end.
+
+replace(Str, S1, S2) ->
+	L = string:tokens(Str, S1),
+	string:join(L, S2).

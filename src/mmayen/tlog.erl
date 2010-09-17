@@ -101,8 +101,8 @@ tid() ->
 to_string(#tlog{tid=Tid, rxid=Rxid, rxpid=RxPid, smsc=Smsc, port=Port,
         system_id=SystemId, handler=Handler, req=Req, res=Res}) ->
 
-    #req{datetime=DateTime0, seqnum=Seqnum, src=RqSrc, dst=RqDst, msg=RqMsg} = Req,
-    #res{rt=Rt0, src=RsSrc, dst=RsDst, msg=RsMsg, status=Status, op=Op0, code=Code0, detail=Detail, extra=Extra} = Res,
+    #req{datetime=DateTime0, seqnum=Seqnum, src=RqSrc, dst=RqDst, msg=RqMsg0} = Req,
+    #res{rt=Rt0, src=RsSrc, dst=RsDst, msg=RsMsg0, status=Status, op=Op0, code=Code0, detail=Detail, extra=Extra} = Res,
 
     DateTime1 = calendar:now_to_local_time(DateTime0),
     DateTime = httpd_util:rfc1123_date(DateTime1),
@@ -124,7 +124,8 @@ to_string(#tlog{tid=Tid, rxid=Rxid, rxpid=RxPid, smsc=Smsc, port=Port,
     Op = ToString(Op0),
     Code = ToString(Code0),
 
-
+	RqMsg = util:replace(RqMsg0, "\n", "+"),
+	RsMsg = util:replace(RsMsg0, "\n", "+"),
 
     lists:flatten(io_lib:format("~s|~s|~.2f|~p|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~p|~s|~b|~s|~p|~p", [Tid, DateTime, Rt, Rxid, 
             RqSrc, RqDst, RqMsg, RsSrc, RsDst, RsMsg, Handler, Status, Op, Code, Detail, 

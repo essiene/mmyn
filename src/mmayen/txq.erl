@@ -88,9 +88,12 @@ tid(T1) ->
     lists:flatten(io_lib:format("~6.10.0B~6.10.0B~6.10.0B", [MegaSecs, Secs, MicroSecs])).
 
 
-log(#txq_req{t1=T1, src=Src, dst=Dst, message=Msg}, TxId, Tq, Tsend) ->
+log(#txq_req{t1=T1, src=Src, dst=Dst, message=Msg0}, TxId, Tq, Tsend) ->
 	% Tid | Src | Dst | Msg | TxId | Pid | Tq | Tsend
+	Msg = util:replace(Msg0, "\n", "+"),
 	Pid = self(),
 	Tid = tid(T1),
 	Log = lists:flatten(io_lib:format("~s|~s|~s|~s|~p|~p|~.2f|~.2f", [Tid, Src, Dst, Msg, TxId, Pid, Tq, Tsend])),
 	ok = log4erl:log(?LOGGER, debug, "~s", [Log]).
+
+
