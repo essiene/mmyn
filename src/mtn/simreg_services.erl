@@ -93,7 +93,7 @@ msisdn_strip(<<"0",Rest/binary>>, MinLen) ->
     msisdn_strip(Rest, MinLen);
 
 msisdn_strip(Msisdn, MinLen) when is_binary(Msisdn), size(Msisdn) < MinLen ->
-    binary_to_list(Msisdn);
+    check_msisdn(binary_to_list(Msisdn));
 
 msisdn_strip(<<"234",Rest/binary>>, MinLen) ->
     msisdn_strip(Rest, MinLen);
@@ -102,7 +102,15 @@ msisdn_strip(Msisdn, MinLen) when is_list(Msisdn), is_integer(MinLen) ->
     msisdn_strip(list_to_binary(Msisdn), MinLen);
 
 msisdn_strip(Msisdn, _) ->
-    binary_to_list(Msisdn).
+    check_msisdn(binary_to_list(Msisdn)).
+
+check_msisdn(Msisdn) ->
+	case string:to_integer(Msisdn) of
+		{error, Reason} ->
+			{error, Reason};
+		{_Number, _} ->
+			{ok, Msisdn}
+	end.
 
 % If no error occurs, web service will
 % return Status, but if an error occurs,
