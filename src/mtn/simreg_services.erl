@@ -70,9 +70,13 @@ handle_sms(_, _, "789", ["puk" | _], _, St) ->
     St};
 
 handle_sms(Tid, _, "789", ["reg" , Msisdn0 | _], _, St) ->
-    Msisdn1 = msisdn_strip(Msisdn0, 5),
-    Msisdn = string:concat("234", Msisdn1),
-    get_reg_status(St, Tid, Msisdn);
+    case msisdn_strip(Msisdn0, 5) of 
+        {ok, Msisdn1} -> 
+            Msisdn = string:concat("234", Msisdn1), 
+            get_reg_status(St, Tid, Msisdn);
+        {error, Reason} ->
+            {noreply, {error, {reg, "500", Reason}}, St}
+    end;
 
 handle_sms(Tid, Msisdn, "789", ["reg" | _], _, St) ->
     get_reg_status(St, Tid, Msisdn);
