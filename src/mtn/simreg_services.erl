@@ -62,13 +62,6 @@ handle_sms(_, _, "789", ["-mmyn#vsn" | _], _, St) ->
         {ok, {vsn, 0}}, 
     St};
 
-handle_sms(_, _, "789", ["help" | _], _, St) ->
-    {reply, 
-        {?SMS_SRC, "help) Menu\npuk) Get puk\nreg)Get status"},
-        {ok, {help, 0}},
-    St};
-
-
 handle_sms(_, _, "789", ["puk" | _], _, St) ->
     {ok, Msg} = application:get_env(msg_puk),
     {reply,
