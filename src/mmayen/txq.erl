@@ -89,7 +89,7 @@ tid(T1) ->
 
 
 log(#txq_req{t1=T1, src=Src, dst=Dst, message=Msg0, module=Mod}, TxId, Tq, Tsend) ->
-    Tstmp0 = calendar:now_to_local_time(T1),
+    Tstmp0 = calendar:now_to_local_time(now()),
     Tstmp = httpd_util:rfc1123_date(Tstmp0),
 
 	Msg = util:replace(Msg0, "\n", "+"),
