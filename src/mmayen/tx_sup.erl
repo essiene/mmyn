@@ -10,7 +10,7 @@
 -behaviour(supervisor).
 
 %% External exports
--export([start_link/0, upgrade/0, start_child/1]).
+-export([start_link/0, start_child/1, ping/0]).
 
 %% supervisor callbacks
 -export([init/1]).
@@ -20,27 +20,18 @@
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-%% @spec upgrade() -> ok
-%% @doc Add processes if necessary.
-upgrade() ->
-    {ok, {_, Specs}} = init([]),
-
-    Old = sets:from_list(
-            [Name || {Name, _, _, _} <- supervisor:which_children(?MODULE)]),
-    New = sets:from_list([Name || {Name, _, _, _, _, _} <- Specs]),
-    Kill = sets:subtract(Old, New),
-
-    sets:fold(fun (Id, ok) ->
-                      supervisor:terminate_child(?MODULE, Id),
-                      supervisor:delete_child(?MODULE, Id),
-                      ok
-              end, ok, Kill),
-
-    [supervisor:start_child(?MODULE, Spec) || Spec <- Specs],
-    ok.
-
 start_child(Id) ->
     supervisor:start_child(?MODULE, [Id]).
+
+ping() ->
+   Children = supervisor:which_children(?MODULE),
+   ping(Children, []).
+
+ping([], Accm) ->
+    Accm;
+ping([{_, Pid, _, _}|Rest], Accm) ->
+    Pong = gen_esme34:ping(Pid),
+    ping(Rest, [Pong|Accm]).
 
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
