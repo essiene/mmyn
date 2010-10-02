@@ -1,0 +1,19 @@
+#! /usr/bin/bash
+
+DAY=$(date -u +%d) 
+[[ -z $1 ]] || DAY=$1
+
+MONTH=$(date -u +%b) 
+[[ -z $2 ]] || MONTH=$1
+
+YEAR=$(date -u +%Y) 
+[[ -z $3 ]] || YEAR=$1
+
+echo -n "All:" $(cat /cisweblogic/smsmodule/log/transaction* | grep "$DAY $MONTH $YEAR"  | wc -l) 
+echo -n " Pass:" $(cat /cisweblogic/smsmodule/log/transaction* | grep "$DAY $MONTH $YEAR"  | awk -F'|' '{ print $12 }' | grep ok | wc -l) 
+echo " Fail:" $(cat /cisweblogic/smsmodule/log/transaction* | grep "$DAY $MONTH $YEAR"  | awk -F'|' '{ print $12 }' | grep error | wc -l) 
+
+for h in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23;do 
+        DATE="$DAY $MONTH $YEAR $h:"
+	echo "$DATE: " $(cat /cisweblogic/smsmodule/log/transaction* | grep "$DATE" | wc -l);
+done;
