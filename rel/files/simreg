@@ -122,24 +122,12 @@ case "$1" in
         exec $CMD
         ;;
 
-    txqping)
-        $NODETOOL rpc rebarctl txqping
-        ;;
-
-    txstat)
-        $NODETOOL rpc rebarctl txstat
-        ;;
-
-    rxstat)
-        $NODETOOL rpc rebarctl rxstat
-        ;;
-
-    startrx)
-        $NODETOOL rpc rebarctl startrx
+    admin)
+        $NODETOOL rpc rebarctl $@
         ;;
 
     *)
-        echo "Usage: $SCRIPT {start|stop|restart|reboot|ping|console|attach|txqping|txstat|rxstat|startrx}"
+        echo "Usage: $SCRIPT {start|stop|restart|reboot|ping|console|attach|admin}"
         exit 1
         ;;
 esac
