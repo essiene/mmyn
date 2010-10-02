@@ -1,15 +1,19 @@
 -module(rebarctl).
--export([txqping/1, txstat/1, rxstat/1]).
--export([startrx/1]).
+-export([admin/1]).
 
-txqping([]) ->
-    {reply, txq:ping()}.
+admin(["txqping"]) ->
+    {reply, txq:ping()};
+admin(["txstat"]) ->
+    {reply, tx_sup:ping()};
+admin(["rxstat"]) ->
+    {reply, rx_sup:ping()};
+admin(["startrx"]) ->
+    {reply, rx_sup:start_child(1)};
+admin(_) ->
+    {reply, help()}.
 
-txstat([]) ->
-    {reply, tx_sup:ping()}.
 
-rxstat([]) ->
-    {reply, rx_sup:ping()}.
-
-startrx([]) ->
-    {reply, rx_sup:start_child(1)}.
+help() ->
+    [{txqping, "Check transmit queue status"}, 
+     {txstat, "Check transmitters status"},
+     {rxstat, "Check receivers status"}].
