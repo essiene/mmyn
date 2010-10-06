@@ -54,7 +54,7 @@ handle_rx(#pdu{sequence_number=Snum, body=#deliver_sm{source_addr=Src, destinati
 
     Tid = log_req(St, Pdu),
 
-	DeliverSmResp = #deliver_sm_resp{message_id=Tid},
+    DeliverSmResp = #deliver_sm_resp{},
 
     case CbMod:handle_sms(Tid, Src, Dst, WordList, Pdu, CbSt) of
        {noreply, Status, CbSt1} ->
