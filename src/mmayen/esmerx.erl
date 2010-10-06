@@ -59,12 +59,12 @@ handle_rx(#pdu{sequence_number=Snum, body=#deliver_sm{source_addr=Src, destinati
        {noreply, Status, CbSt1} ->
             log_status(Tid, Status),
             notify(St, Status),
-            {tx, {?ESME_ROK, Snum, DeliverSmResp}, St#st{callback=Cb#cb{st=CbSt1}}};
+            {tx, {?ESME_ROK, Snum, DeliverSmResp, Tid}, St#st{callback=Cb#cb{st=CbSt1}}};
         {reply, Reply, Status, CbSt1} ->
             log_status(Tid, {Dst, Src, Reply}, Status),
             send(Dst, Src, Reply),
             notify(St, Status),
-            {tx, {?ESME_ROK, Snum, DeliverSmResp}, St#st{callback=Cb#cb{st=CbSt1}}}
+            {tx, {?ESME_ROK, Snum, DeliverSmResp, Tid}, St#st{callback=Cb#cb{st=CbSt1}}}
     end;
 
     
