@@ -53,8 +53,8 @@ handle_tx({Status, StatusDetail}, {#txq_req{t1=T1}=QItem, DqTime}, #st{id=Id}=St
 	txq:log(QItem, Id, Qtime, SendTime, Status, StatusDetail),
 	{noreply, St}.
 
-handle_rx(Pdu, #st{id=Id}=St) ->
-    error_logger:info_msg("[~p] Transmitter ~p has received PDU: ~p~n", [self(), Id, Pdu]),
+handle_rx(_, St) ->
+    % eventually log submit_sm_resp here
     {noreply, St}.
     
 handle_call(Req, _From, St) ->

@@ -81,8 +81,7 @@ handle_sms(Tid, _, "789", ["reg" , Msisdn0 | _], _, St) ->
 handle_sms(Tid, Msisdn, "789", ["reg" | _], _, St) ->
     get_reg_status(St, Tid, Msisdn);
 
-handle_sms(_, Src, Dst, WordList, _, St) ->
-    error_logger:info_msg("[~p] Got unhandled SMS. ~p => ~p : ~p~n", [?MODULE, Src, Dst, WordList]),
+handle_sms(_, _, _, _, _, St) ->
     {noreply, {ok, {default, "404", "Unhandled SMS"}}, St}.
 
 terminate(_Reason, _St) ->

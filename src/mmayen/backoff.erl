@@ -78,19 +78,16 @@ handle_call({deregister, Pid}, _F, #st{tbl=Tbl}=St) ->
     {reply, deregister(Tbl, Pid), St};
 
 handle_call({regular, Pid}, _F, #st{tbl=Tbl}=St) ->
-    error_logger:info_msg("Recieved regular-backoff request from ~p~n", [Pid]),
     {reply, backoff(Tbl, Pid, fun backoff_normal/1), St};
 
 
 handle_call({increment, Pid}, _F, #st{tbl=Tbl}=St) ->
-    error_logger:info_msg("Recieved incremental-backoff request from ~p~n", [Pid]),
     {reply, backoff(Tbl, Pid, fun backoff_grow/1), St};
 
 handle_call(status, _F, St) ->
     {reply, {ok, alive}, St};
 
 handle_call(stop, _F, St) ->
-    error_logger:info_msg("~p stopping~n", [?MODULE]),
     {stop, normal, ok, St};
 
 handle_call(R, _F, St) ->
@@ -117,31 +114,25 @@ code_change(_OldVsn, St, _Extra) ->
     {ok, St}.
 
 
-backoff(#spec{pid=Pid, cur=undefined, dlta=D, min=N}=S) ->
-    error_logger:info_msg("Initialized timer for ~p~n", [Pid]),
+backoff(#spec{cur=undefined, dlta=D, min=N}=S) ->
     backoff(S#spec{cur=N, cur_dlta=D});
 
 
-backoff(#spec{pid=Pid, cur=N, tref=undefined, mfa={M, F, A}}=S) ->
-    error_logger:info_msg("Going to create timer for ~p with params: [~p,~p,~p,~p]~n", [Pid, N, M, F, A]),
+backoff(#spec{cur=N, tref=undefined, mfa={M, F, A}}=S) ->
     case timer:apply_after(N, M, F, A) of
         {ok, TRef} -> 
-            error_logger:info_msg("Created timer for ~p~n", [Pid]),
             {ok, S#spec{tref=TRef}};
         {error, Reason} ->
-            error_logger:info_msg("Failed to create timer for ~p. Reason: ~p~n", [Pid, Reason]),
             {error, Reason}
     end;
 
-backoff(#spec{pid=Pid, tref=TRef}=S) ->
+backoff(#spec{tref=TRef}=S) ->
     timer:cancel(TRef),
-    error_logger:info_msg("Cancelled timer for ~p~n", [Pid]),
     backoff(S#spec{tref=undefined}).
 
 
 
-backoff_grow(#spec{cur=C, cur_dlta=D0, max=Max, pid=Pid}=S) ->
-    error_logger:info_msg("Incrementing timer for ~p: [~p, ~p, ~p]~n", [Pid, C, D0, Max]),
+backoff_grow(#spec{cur=C, cur_dlta=D0, max=Max}=S) ->
     D = D0*2,
     case C + D of
         N when N < Max ->

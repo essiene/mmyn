@@ -56,14 +56,11 @@ handle_http(Req) ->
     Method2 = string:to_lower(Method1),
     Method3 = list_to_atom(Method2),
     Resource = Req:resource([lowercase, urldecode]),
-    error_logger:info_msg("Dispatching: simreg_misultin:~p(~p, ...)~n", [Method3, Resource]),
     simreg_misultin:Method3(Resource, Req).
 
 
 get(["sendsms"], Req) ->
     QueryString = Req:parse_qs(),
-
-    error_logger:info_msg("QueryString: ~p~n", [QueryString]),
 
     case proplists:is_defined("wsdl", QueryString) of
         true -> 
@@ -75,8 +72,6 @@ get(["sendsms"], Req) ->
 get(["send"], Req) ->
     QueryString = Req:parse_qs(),
 
-    error_logger:info_msg("QueryString: ~p~n", [QueryString]),
-
     {"to", Dst} = proplists:lookup("to", QueryString),
     {"msg", Msg} = proplists:lookup("msg", QueryString),
 
@@ -84,15 +79,13 @@ get(["send"], Req) ->
 
     Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n");
 
-get(Other, Req) ->
-    error_logger:info_msg("Get request: ~p ~p~n", [Other, Req]),
+get(_, Req) ->
     Req:respond(404, "Foo Found\r\n").
 
 post(["sendsms"], Req) ->
     #soap_response{status=Status, message=Message} = sms:send("SimReg", Req:get(body), simreg_misultin),
     Xml0 = io_lib:format(?SENDSMS_RESPONSE_TEMPLATE, [Status, Message]),
     Xml1 = lists:flatten(Xml0),
-    error_logger:info_msg("Response: ~p~n", [Xml1]),
     Req:ok([{"Content-Type", "text/xml"}], Xml1);
     
 post(_Path, Req) ->

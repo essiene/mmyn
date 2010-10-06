@@ -48,8 +48,7 @@ handle_tx(_, _, St) ->
 
 
 handle_rx(#pdu{sequence_number=Snum, body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_message=Msg}}=Pdu, 
-        #st{callback=#cb{mod=CbMod, st=CbSt, ready=true}=Cb, id=Id}=St) ->
-    error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
+        #st{callback=#cb{mod=CbMod, st=CbSt, ready=true}=Cb}=St) ->
     {ok, WordList} = preprocess(Msg),
 
     Tid = log_req(St, Pdu),
@@ -70,8 +69,7 @@ handle_rx(#pdu{sequence_number=Snum, body=#deliver_sm{source_addr=Src, destinati
 
     
 
-handle_rx(Pdu, #st{id=Id}=St) ->
-    error_logger:info_msg("[~p] Receiver ~p has received PDU: ~p~n", [self(), Id, Pdu]),
+handle_rx(_, St) ->
     {noreply, St}.
     
 handle_call(Req, _From, St) ->
