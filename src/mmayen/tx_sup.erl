@@ -39,7 +39,7 @@ init([]) ->
 
     Tx = {esmetx, 
         {esmetx, start_link, []},
-        transient, 5000, worker, [esmetx]},
+        temporary, 5000, worker, [esmetx]},
 
     Processes = [Tx],
 

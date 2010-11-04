@@ -40,7 +40,7 @@ init([]) ->
 
     Rx = {esmerx, 
         {esmerx, start_link, []},
-        transient, 5000, worker, [esmerx]},
+        temporary, 5000, worker, [esmerx]},
 
     Processes = [Rx],
 
