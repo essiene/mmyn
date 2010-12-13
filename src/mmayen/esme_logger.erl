@@ -36,9 +36,9 @@ init([Type, Id]) ->
             {error, Reason}
     end.
 
-handle_event({'ERROR', Log}, #st_esmelogr{logger=Logger}=St) ->
+handle_event({'ERROR'=Level, Log}, #st_esmelogr{logger=Logger}=St) ->
     error_logger:error_msg("~s~n", [Log]),
-    log4erl:log(Logger, error, "~s", [Log]),
+    log4erl:log(Logger, Level, "~s", [Log]),
     {ok, St};
 handle_event({Level, Log}, #st_esmelogr{logger=Logger}=St) ->
     log4erl:log(Logger, Level, "~s", [Log]),
