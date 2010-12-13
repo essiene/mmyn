@@ -7,9 +7,11 @@
 -record(st_esmelogr, {type, id, logger}).
 
 init([Type, Id]) ->
-    {ok, LogDir} = application:get_env(esme_logdir),
-    {ok, LogSize} = application:get_env(esme_logsize),
-    {ok, NumRotations} = application:get_env(esme_logdir),
+    {ok, LogDir} = application:get_env(simreg, esme_logdir),
+    {ok, LogSize} = application:get_env(simreg, esme_logsize),
+    {ok, NumRotations} = application:get_env(simreg, esme_logkeep),
+    {ok, Level} = application:get_env(simreg, esme_loglevel),
+
     LogFile = create_logfilename(Type, Id),
     Logger = list_to_atom("__" ++ LogFile),
     Suffix = "log",
