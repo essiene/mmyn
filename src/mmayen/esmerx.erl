@@ -20,7 +20,7 @@
 
 
 start_link(Id) ->
-    gen_esme34:start_link(?MODULE, [simreg_services, Id], []).
+    gen_esme34:start_link(?MODULE, [simreg_services, Id], [{logger, {esme_logger, [esmerx, Id]}}]).
 
 start(Id) ->
     gen_esme34:start(?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD, simreg_services, Id], []).

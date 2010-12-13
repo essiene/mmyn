@@ -21,7 +21,7 @@
 -record(st, {host, port, system_id, password, id, esmetx_backoff, awake}).
 
 start_link(Id) ->
-    gen_esme34:start_link(?MODULE, [Id], []).
+    gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [esmetx, Id]}}]).
 
 start(Id) ->
     gen_esme34:start(?MODULE, [Id], []).
