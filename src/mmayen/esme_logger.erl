@@ -61,6 +61,6 @@ code_change(_OldVsn, St, _Extra) ->
 
 
 create_logfilename(Type, Id) when is_number(Id) ->
-    io_lib:format("~s-~p", [Type, Id]);
+    lists:flatten(io_lib:format("~s~p", [Type, Id]));
 create_logfilename(Type, Id) ->
-    io_lib:format("~s-~s", [Type, Id]).
+    lists:flatten(io_lib:format("~s~s", [Type, Id])).
