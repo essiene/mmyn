@@ -17,7 +17,7 @@ init([Type, Id]) ->
     Suffix = "log",
 
     AddAppender = fun () ->
-        case log4erl:add_file_appender(Logger, file_logger_qlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
+        case log4erl:add_file_appender(Logger, Logger, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, Level, "%j %T <%L> %l%n"}) of
             {ok, _} ->
                 {ok, #st_esmelogr{type=Type, id=Id, logger=Logger}};
             {error, {already_started, _}} ->
