@@ -1,7 +1,6 @@
 -module(esmerx).
 -behaviour(gen_esme34).
 -include("simreg.hrl").
--include("tlog.hrl").
 
 -export([init/1,
         handle_call/3,
@@ -15,7 +14,6 @@
 -export([start_link/1, start/1, stop/1]).
 
 -record(st, {host, port, system_id, password, id}).
--record(cb, {mod, st, ready=false}).
 
 
 start_link(Id) ->
@@ -39,26 +37,10 @@ handle_tx(_, _, St) ->
 	{noreply, St}. 
 
 
-handle_rx(#pdu{sequence_number=Snum, body=#deliver_sm{source_addr=Src, destination_addr=Dst, short_message=Msg}}=Pdu, 
-        #st{callback=#cb{mod=CbMod, st=CbSt, ready=true}=Cb}=St) ->
-    {ok, WordList} = preprocess(Msg),
-
-    Tid = log_req(St, Pdu),
-
+handle_rx(#pdu{sequence_number=Snum}=Pdu, #st{id=Id}=St) ->
+    {ok, Qid} = rxq:push(#rxq_req{rxid=Id, pdu=Pdu}),
     DeliverSmResp = #deliver_sm_resp{},
-
-    case CbMod:handle_sms(Tid, Src, Dst, WordList, Pdu, CbSt) of
-       {noreply, Status, CbSt1} ->
-            log_status(Tid, Status),
-            notify(St, Status),
-            {tx, {?ESME_ROK, Snum, DeliverSmResp, Tid}, St#st{callback=Cb#cb{st=CbSt1}}};
-        {reply, Reply, Status, CbSt1} ->
-            log_status(Tid, {Dst, Src, Reply}, Status),
-            send(Dst, Src, Reply),
-            notify(St, Status),
-            {tx, {?ESME_ROK, Snum, DeliverSmResp, Tid}, St#st{callback=Cb#cb{st=CbSt1}}}
-    end;
-
+    {tx, {?ESME_ROK, Snum, DeliverSmResp, Qid}, St};
     
 
 handle_rx(_, St) ->
@@ -75,100 +57,8 @@ handle_cast(_Req, St) ->
 handle_info(_, St) ->
     {noreply, St}.
 
-terminate(Reason, #st{callback=#cb{mod=CbMod, st=CbSt, ready=true}}) ->
-    CbMod:terminate(Reason,CbSt),
-    ok;
 terminate(_, _) ->
     ok.
 
 code_change(_OldVsn, St, _Extra) ->
     {noreply, St}.
-
-preprocess(Msg0) ->
-    Msg = string:strip(Msg0),
-    Lower = string:to_lower(Msg),
-    {ok, string:tokens(Lower, "\n\t ")}.
-
-send(_, _, {From, To, Reply}) ->
-    sms:send(From, To, Reply, esmerx);
-
-send(_, To, {From, Reply}) ->
-    sms:send(From, To, Reply, esmerx);
-
-send(From, To, Reply) ->
-    sms:send(From, To, Reply, esmerx).
-
-notify(_, ok) ->
-    ok;
-notify(_, {ok, _}) ->
-    ok;
-notify(#st{notify_msisdns=MsisdnList, notify_sender=Src}, Error) ->
-    notify(Src, MsisdnList, Error).
-
-notify(_, undefined, _) ->
-    ok;
-notify(undefined, MsisdnList, Error) ->
-    notify("mmyn", MsisdnList, Error);
-notify(_, [], Msg) when is_list(Msg) ->
-    ok;
-notify(Src, [Msisdn|Rest], Msg) when is_list(Msg) ->
-    send(Src, Msisdn, Msg),
-    notify(Src, Rest, Msg);
-notify(Src, MsisdnList, {error, {Op, Code, Message}}) ->
-    notify(Src, MsisdnList, util:sms_format_msg("~p~n~p~n~p", [Op, Code, Message]));
-notify(Src, MsisdnList, {error, Reason}) ->
-    notify(Src, MsisdnList, util:sms_format_msg("~p", [Reason])).
-
-log_req(#st{host=Host, port=Port, system_id=SystemId, id=Id, callback=#cb{mod=Module}},
-#pdu{sequence_number=Sn, body=#deliver_sm{source_addr=From, destination_addr=To,
-        short_message=Msg}}) ->
-
-    Req = #req{
-            seqnum = Sn, 
-            src = From, 
-            dst = To, 
-            msg = Msg},
-
-    tlog:req(Host,
-            Port,
-            SystemId,
-            Id,
-            Module,
-            Req).
-
-log_status(Tid, Status) ->
-    log_status(Tid, undefined, Status).
-
-log_status(Tid, undefined, Status) ->
-    log_status(Tid, {"", "", ""}, Status);
-
-log_status(Tid, {_, _, {From, To, Msg}}, Status) ->
-    log_status(Tid, {From, To, Msg}, Status);
-
-log_status(Tid, {_, To, {From, Msg}}, Status) ->
-    log_status(Tid, {From, To, Msg}, Status);
-
-log_status(Tid, Reply, ok) ->
-    log_status(Tid, Reply, {ok, {"", "", "", ""}});
-
-log_status(Tid, Reply, error) ->
-    log_status(Tid, Reply, {error, {"", "", "", ""}});
-
-log_status(Tid, Reply, {Status, {Op, Code}}) ->
-    log_status(Tid, Reply, {Status, {Op, Code, "", ""}});
-
-log_status(Tid, Reply, {Status, {Op, Code, Detail}}) ->
-    log_status(Tid, Reply, {Status, {Op, Code, Detail, ""}});
-
-log_status(Tid, {From, To, Msg}, {Status, {Op, Code, Detail, Extra}}) ->
-    Res = #res{
-            src=From, 
-            dst=To, 
-            msg=Msg,
-            status=Status,
-            op=Op,
-            code=Code,
-            detail=Detail,
-            extra=Extra},
-
-    tlog:status(Tid, Res).
