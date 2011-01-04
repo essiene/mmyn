@@ -67,6 +67,10 @@ init([]) ->
                                         {esmetx,stop},{{esmetx,wake}, 1000}]},
         permanent, 5000, worker, [tx_nanny]},
 
+    RxQ = {rxq, 
+        {rxq, start_link, []},
+        permanent, 5000, worker, [rxq]},
+
     RxSup = {rx_sup,
         {rx_sup, start_link, []},
         permanent, infinity, supervisor, [rx_sup]},
@@ -81,6 +85,6 @@ init([]) ->
         {simreg_misultin, start_link, []},
         permanent, 5000, worker, [simreg_misultin]},
 
-    Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, RxSup, RxNanny, Webservice],
+    Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, RxQ, RxSup, RxNanny, Webservice],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.
