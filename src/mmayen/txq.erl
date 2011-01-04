@@ -33,9 +33,9 @@ init([]) ->
     AddAppender = fun () ->
         case log4erl:add_file_appender(?LOGGER, file_logger_qlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
             {ok, _} ->
-    			{ok, #st{q=queue:new()}};
+    			{ok, #st{q=spq:open('.txq.q')}};
             {error, {already_started, _}} ->
-    			{ok, #st{q=queue:new()}};
+    			{ok, #st{q=spq:open('.txq.q')}};
             {error, Reason} ->
                 {stop, Reason}
         end
@@ -53,19 +53,19 @@ init([]) ->
 
 handle_call({push, #txq_req{}=Item}, _F, #st{q=Q}=St) ->
     Qid = qid(),
-    Q1 = queue:in(Item#txq_req{t1=now(), id=Qid}, Q),
-    {reply, {ok, Qid}, St#st{q=Q1}};
+    spq:push(Q, Item#txq_req{t1=now(), id=Qid}),
+    {reply, {ok, Qid}, St};
 
 handle_call(pop, _F, #st{q=Q}=St) ->
-    case queue:out(Q) of
-        {empty, Q} -> 
+    case spq:pop(Q) of
+        {error, empty} -> 
             {reply, '$empty', St};
-        {{value, V}, Q1} ->
-            {reply, V, St#st{q=Q1}}
+        {value, V} ->
+            {reply, V, St}
     end;
 
 handle_call(ping, _F, #st{q=Q}=St) ->
-	Len = queue:len(Q),
+	Len = spq:len(Q),
 	{reply, {pong, [{len, Len}]}, St};
 
 handle_call(R, _F, St) ->
