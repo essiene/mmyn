@@ -6,7 +6,7 @@
         handle_cast/2,handle_info/2,
         terminate/2,code_change/3]).
 
--export([start_link/0, push/1, pop/0, ping/0, log/6]).
+-export([start_link/0, push/1, pop/0, ping/0]).
 
 -record(st, {q}).
 
@@ -92,13 +92,3 @@ code_change(_OldVsn, St, _Extra) ->
 qid() ->
     {MegaSecs, Secs, MicroSecs} = now(),
     lists:flatten(io_lib:format("~6.10.0B~6.10.0B~6.10.0B", [MegaSecs, Secs, MicroSecs])).
-
-
-log(#rxq_req{id=Tid, src=Src, dst=Dst, message=Msg0, module=Mod}, TxId, Tq, Tsend, Status, StatusDetail) ->
-    Tstmp0 = calendar:now_to_local_time(now()),
-    Tstmp = httpd_util:rfc1123_date(Tstmp0),
-
-	Msg = util:replace(Msg0, "\n", "+"),
-	Pid = self(),
-	Log = lists:flatten(io_lib:format("~s|~.2f|~.2f|~p|~p|~p|~s|~s|~s|~s|~p|~p", [Tstmp, Tq, Tsend, TxId, Pid, Mod, Tid, Src, Dst, Msg, Status, StatusDetail])),
-	ok = log4erl:log(?LOGGER, debug, "~s", [Log]).
