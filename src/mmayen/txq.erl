@@ -31,11 +31,16 @@ init([]) ->
     Suffix = "log",
 
     AddAppender = fun () ->
-        case log4erl:add_file_appender(?LOGGER, file_logger_qlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
-            {ok, _} ->
-    			{ok, #st{q=spq:open('.txq.q')}};
-            {error, {already_started, _}} ->
-    			{ok, #st{q=spq:open('.txq.q')}};
+        case spq:open('.txq.q') of
+            {ok, Q} ->
+                case log4erl:add_file_appender(?LOGGER, file_logger_qlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
+                    {ok, _} ->
+                        {ok, #st{q=Q}};
+                    {error, {already_started, _}} ->
+                        {ok, #st{q=Q}};
+                    {error, Reason} ->
+                        {stop, Reason}
+                end;
             {error, Reason} ->
                 {stop, Reason}
         end
