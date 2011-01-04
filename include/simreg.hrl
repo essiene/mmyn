@@ -6,6 +6,8 @@
 
 -record(txq_req, {id, src, dst, message, t1, module}).
 
+-record(rxq_req, {id, pdu, t1, rxid}).
+
 -define(SMSC_HOST, "10.200.213.4").
 -define(SMSC_PORT, 10000).
 -define(SYSTEM_ID, "cisaccount").
