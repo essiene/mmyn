@@ -14,13 +14,12 @@
 
 -export([start_link/1, start/1, stop/1]).
 
--record(st, {host, port, system_id, password, callback, id,
-        notify_msisdns, notify_sender}).
+-record(st, {host, port, system_id, password, id}).
 -record(cb, {mod, st, ready=false}).
 
 
 start_link(Id) ->
-    gen_esme34:start_link(?MODULE, [simreg_services, Id], [{logger, {esme_logger, [esmerx, Id]}}]).
+    gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [esmerx, Id]}}]).
 
 start(Id) ->
     gen_esme34:start(?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD, simreg_services, Id], []).
@@ -28,20 +27,13 @@ start(Id) ->
 stop(Pid) ->
     gen_esme34:cast(Pid, stop).
 
-init([CbMod, Id]) ->
+init([Id]) ->
     {Host, Port, SystemId, Password} = util:smsc_params(),
-    {NotifyMsisdns, NotifySender} = util:notify_params(),
 
-    case CbMod:init() of
-        {ok, CbState} ->
-    		{ok, 
-				{Host, Port, #bind_receiver{system_id=SystemId, password=Password}}, 
-				#st{host=Host, port=Port, system_id=SystemId, password=Password, 
-					callback=#cb{mod=CbMod, st=CbState, ready=true}, id=Id, notify_msisdns=NotifyMsisdns, 
-					notify_sender=NotifySender}};
-        {stop, Reason} ->
-			{stop, Reason}
-    end.
+    {ok, 
+        {Host, Port, #bind_receiver{system_id=SystemId, password=Password}}, 
+        #st{host=Host, port=Port, system_id=SystemId, password=Password, id=Id}
+    }.
 
 handle_tx(_, _, St) ->
 	{noreply, St}. 
