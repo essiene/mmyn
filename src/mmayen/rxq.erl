@@ -38,14 +38,19 @@ init([]) ->
     LogFile = "rxqueue",
     Suffix = "log",
 
+    StartNormal = fun(Spq) ->
+            erlang:send_after(2000, self(), async_pop),
+            {ok, #st{q=Spq, async_rx=queue:new()}}
+    end,
+
     AddAppender = fun () ->
         case spq:open('.rxq.q') of
             {ok, Q} ->
                 case log4erl:add_file_appender(?LOGGER, file_logger_qlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
                     {ok, _} ->
-                        {ok, #st{q=Q, async_rx=queue:new()}};
+                        StartNormal(Q);
                     {error, {already_started, _}} ->
-                        {ok, #st{q=Q, async_rx=queue:new()}};
+                        StartNormal(Q);
                     {error, Reason} ->
                         {stop, Reason}
                 end;
