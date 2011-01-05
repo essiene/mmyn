@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 -export([open/1, open/2,close/1]).
--export([push/2, len/1, pop/1]).
+-export([push/2, len/1, pop/1, pop/2]).
 
 -export([init/1,handle_call/3,handle_cast/2,handle_info/2,
          terminate/2,code_change/3]).
@@ -28,6 +28,9 @@ len(Ref) ->
 pop(Ref) ->
     gen_server:call(Ref, pop).
 
+pop(Ref, Count) ->
+    gen_server:call(Ref, {pop, Count}).
+
 
 
 
@@ -47,6 +50,9 @@ init([Filename, Freq]) ->
              end
      end.
 
+handle_call({pop, Count}, _, #st_spq{pstruct=P0}=St) ->
+    {P1, Result} = pstruct_pop(P0, Count),
+    {reply, Result, St#st_spq{pstruct=P1}};
 
 handle_call(pop, _, #st_spq{pstruct=P0}=St) ->
     {P1, Result} = pstruct_pop(P0),
@@ -126,4 +132,17 @@ pstruct_pop(#pstruct{len=L0, q=Q0}=P0) ->
      catch 
          error: empty ->
             {P0, {error, empty}}
+    end.
+
+pstruct_pop(P, Count) ->
+    pstruct_pop(P, Count, []).
+
+pstruct_pop(_, 0, Accm) ->
+    lists:reverse(Accm);
+pstruct_pop(P0, Count, Accm) ->
+    case pstruct_pop(P0) of
+        {P0, {error, empty}} ->
+            lists:reverse(Accm);
+        {P1, {value, Item}} ->
+            pstruct_pop(P1, Count-1, [Item|Accm])
     end.
