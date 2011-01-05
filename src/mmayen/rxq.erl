@@ -57,6 +57,9 @@ init([]) ->
     end.
 
 
+handle_call(asyncq, _, #st{async_rx=ARx}=St) ->
+    {reply, {ok, queue:to_list(ARx)}, St};
+
 handle_call({push, #rxq_req{}=Item}, _F, #st{q=Q}=St) ->
     Qid = qid(),
     spq:push(Q, Item#rxq_req{t1=now(), id=Qid}),
@@ -85,6 +88,9 @@ handle_cast({async_pop_req, W, S}, #st{async_rx=AsyncRx0}=St) ->
 
 handle_cast(_R, St) ->
     {noreply, St}.
+
+handle_info(async_pop, St) ->
+    {noreply, St};
 
 handle_info(_R, St) ->
     {noreply, St}.
