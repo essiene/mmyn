@@ -8,7 +8,8 @@
 
 -export([start_link/0, push/1, pop/0, ping/0]).
 
--record(st, {q}).
+-record(st, {q, async_rx}).
+-record(async_req, {sender, window_sz}).
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
@@ -35,9 +36,9 @@ init([]) ->
             {ok, Q} ->
                 case log4erl:add_file_appender(?LOGGER, file_logger_qlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
                     {ok, _} ->
-                        {ok, #st{q=Q}};
+                        {ok, #st{q=Q, async_rx=queue:new()}};
                     {error, {already_started, _}} ->
-                        {ok, #st{q=Q}};
+                        {ok, #st{q=Q, async_rx=queue:new()}};
                     {error, Reason} ->
                         {stop, Reason}
                 end;
@@ -75,6 +76,12 @@ handle_call(ping, _F, #st{q=Q}=St) ->
 
 handle_call(R, _F, St) ->
     {reply, {error, {illegal_request, R}}, St}.
+
+handle_cast({async_pop_req, W, S}, #st{async_rx=AsyncRx0}=St) ->
+    Rq = #async_req{sender=S, window_sz=W},
+    AsyncRx1 = queue:in(Rq, AsyncRx0),
+    erlang:send_after(500, self(), async_pop),
+    {noreply, St#st{async_rx=AsyncRx1}};
 
 handle_cast(_R, St) ->
     {noreply, St}.
