@@ -96,8 +96,17 @@ handle_cast({async_pop_req, W, S}, #st{async_rx=AsyncRx0}=St) ->
 handle_cast(_R, St) ->
     {noreply, St}.
 
-handle_info(async_pop, St) ->
-    {noreply, St};
+handle_info(async_pop, #st{async_rx=ARx0, q=Q}=St) ->
+    {Time, ARx} = case handle_async_pop(ARx0, Q) of
+        {noitem, ARx1} ->
+            {2000, ARx1};
+        {noreq, ARx1} ->
+            {2000, ARx1};
+        {ok, ARx1} ->
+            {500, ARx1}
+    end,
+    erlang:send_after(Time, self(), async_pop),
+    {noreply, St#st{async_rx=ARx}};
 
 handle_info(_R, St) ->
     {noreply, St}.
