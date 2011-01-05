@@ -85,9 +85,10 @@ handle_call(pop, _F, #st{q=Q}=St) ->
             {reply, V, St}
     end;
 
-handle_call(ping, _F, #st{q=Q}=St) ->
+handle_call(ping, _F, #st{q=Q, async_rx=ARx}=St) ->
 	Len = spq:len(Q),
-	{reply, {pong, [{len, Len}]}, St};
+    AsyncQLen = queue:len(ARx),
+	{reply, {pong, [{len, Len}, {asyncq_len, AsyncQLen}]}, St};
 
 handle_call(R, _F, St) ->
     {reply, {error, {illegal_request, R}}, St}.
