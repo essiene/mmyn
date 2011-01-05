@@ -7,6 +7,7 @@
         terminate/2,code_change/3]).
 
 -export([start_link/0, push/1, pop/0, ping/0]).
+-export([async_pop/1, asyncq/0]).
 
 -record(st, {q, async_rx}).
 -record(async_req, {sender, window_sz}).
@@ -19,6 +20,12 @@ push(#rxq_req{}=Item) ->
 
 pop() ->
     gen_server:call(?MODULE, pop).
+
+async_pop(WindowSize) ->
+    gen_server:cast(?MODULE, {async_pop_req, WindowSize, self()}).
+
+asyncq() ->
+    gen_server:call(?MODULE, asyncq).
 
 ping() ->
 	gen_server:call(?MODULE, ping).
