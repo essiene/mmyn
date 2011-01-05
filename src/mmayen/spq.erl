@@ -137,12 +137,12 @@ pstruct_pop(#pstruct{len=L0, q=Q0}=P0) ->
 pstruct_pop(P, Count) ->
     pstruct_pop(P, Count, []).
 
-pstruct_pop(_, 0, Accm) ->
-    lists:reverse(Accm);
+pstruct_pop(P, 0, Accm) ->
+    {P, lists:reverse(Accm)};
 pstruct_pop(P0, Count, Accm) ->
     case pstruct_pop(P0) of
         {P0, {error, empty}} ->
-            lists:reverse(Accm);
+            {P0, lists:reverse(Accm)};
         {P1, {value, Item}} ->
             pstruct_pop(P1, Count-1, [Item|Accm])
     end.

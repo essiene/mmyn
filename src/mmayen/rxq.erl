@@ -129,7 +129,7 @@ qid() ->
     lists:flatten(io_lib:format("~6.10.0B~6.10.0B~6.10.0B", [MegaSecs, Secs, MicroSecs])).
 
 handle_async_pop(AsyncQ, Spq) ->
-    case Spq:len() of
+    case spq:len(Spq) of
         0 ->
             {noitem, AsyncQ};
         _ ->
@@ -141,7 +141,7 @@ handle_async_pop(AsyncQ, Spq) ->
                         false ->
                             handle_async_pop(AsyncQ1, Spq);
                         true ->
-                            Items = spq:pop(W),
+                            Items = spq:pop(Spq, W),
                             S ! {self(), rxq_data, Items},
                             {ok, AsyncQ1}
                     end
