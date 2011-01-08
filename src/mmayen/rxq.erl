@@ -7,7 +7,7 @@
         terminate/2,code_change/3]).
 
 -export([start_link/0, push/1, pop/0, ping/0]).
--export([async_pop/1, asyncq/0]).
+-export([async_pop/1, async_pop/2, asyncq/0]).
 
 -record(st, {q, async_rx}).
 -record(async_req, {sender, window_sz, ref, t1}).
@@ -23,7 +23,10 @@ pop() ->
     gen_server:call(?MODULE, {pop, self(), now()}).
 
 async_pop(WindowSize) ->
-    gen_server:cast(?MODULE, {async_pop_req, WindowSize, self(), now()}).
+    gen_server:call(?MODULE, {async_pop_req, WindowSize, self(), now()}).
+
+async_pop(WindowSize, Data) ->
+    gen_server:call(?MODULE, {async_pop_req, WindowSize, {self(), Data}, now()}).
 
 asyncq() ->
     gen_server:call(?MODULE, asyncq).
@@ -140,14 +143,21 @@ handle_async_pop(AsyncQ, Spq) ->
                 {empty, AsyncQ} ->
                     {noreq, AsyncQ};
                 {{value, #async_req{sender=S, window_sz=W, ref=Ref, t1=T1}}, AsyncQ1} ->
-                    case is_process_alive(S) of
+                    SPid = case S of
+                        {Pid, _} ->
+                            Pid;
+                        Pid ->
+                            Pid
+                    end,
+
+                    case is_process_alive(SPid) of
                         false ->
                             %% log dead requester?
                             handle_async_pop(AsyncQ1, Spq);
                         true ->
                             Items = spq:pop(Spq, W),
                             log(Items, S, T1),
-                            S ! {Ref, rxq_data, Items},
+                            SPid ! {Ref, rxq_data, Items},
                             {ok, AsyncQ1}
                     end
             end
@@ -173,5 +183,11 @@ log(#log{qid=Id, rwait=Rwt, caller=Caller, cwait=Cwt}) ->
     Tstmp0 = calendar:now_to_local_time(now()),
     Tstmp = httpd_util:rfc1123_date(Tstmp0),
 
-    Log=lists:flatten(io_lib:format("~s|~p|~.2f|~2.f|~p", [Tstmp,Id,Rwt,Cwt,Caller])),
+    Log = case Caller of
+        {Pid, Data} ->
+            lists:flatten(io_lib:format("~s|~s|~.2f|~.2f|~w|~w", [Tstmp,Id,Rwt,Cwt,Pid,Data]));
+        Pid ->
+            lists:flatten(io_lib:format("~s|~s|~.2f|~.2f|~w|", [Tstmp,Id,Rwt,Cwt,Pid]))
+    end,
+
     ok = log4erl:log(?LOGGER, debug, "~s", [Log]).
