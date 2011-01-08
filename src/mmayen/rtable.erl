@@ -4,6 +4,7 @@
 -export([route/1]).
 
 -record(st_rtable, {t}).
+-record(sms_req, {from, to, msg}).
 
 %% Routing Table Structure
 % rtable() = [rule()]
@@ -38,6 +39,16 @@ route(Tbl, Seperator, #pdu{body=#deliver_sm{source_addr=From,
     route(Tbl, SmsReq).
 
 
+route(Tbl, #sms_req{to=To}) ->
+    case find_rule(Tbl, To) of
+        {error, norule} ->
+            {error, route_not_found};
+        {ok, Rule} ->
+            %do something with rule
+            ok
+    end.
+
+
 preprocess(Msg0) ->
     Msg = string:strip(Msg0),
     string:to_lower(Msg).
@@ -46,4 +57,11 @@ preprocess(Msg0, Seperator) ->
     Msg = string:strip(Msg0),
     Lower = string:to_lower(Msg),
     string:tokens(Lower, Seperator).
+
+find_rule([], _) ->
+    {error, norule};
+find_rule([{_,To,_,_}=H|_], To) ->
+    {ok, H};
+find_rule([{_,_,_,_}|Tail], To) ->
+    find_rule(Tail, To).
 
