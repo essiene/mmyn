@@ -10,7 +10,8 @@
 -export([async_pop/1, asyncq/0]).
 
 -record(st, {q, async_rx}).
--record(async_req, {sender, window_sz, ref}).
+-record(async_req, {sender, window_sz, ref, t1}).
+-record(log, {qid, rwait, caller, cwait}).
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
@@ -19,10 +20,10 @@ push(#rxq_req{}=Item) ->
     gen_server:call(?MODULE, {push, Item}).
 
 pop() ->
-    gen_server:call(?MODULE, pop).
+    gen_server:call(?MODULE, {pop, self(), now()}).
 
 async_pop(WindowSize) ->
-    gen_server:cast(?MODULE, {async_pop_req, WindowSize, self()}).
+    gen_server:cast(?MODULE, {async_pop_req, WindowSize, self(), now()}).
 
 asyncq() ->
     gen_server:call(?MODULE, asyncq).
@@ -77,19 +78,19 @@ handle_call({push, #rxq_req{}=Item}, _F, #st{q=Q}=St) ->
     spq:push(Q, Item#rxq_req{t1=now(), id=Qid}),
     {reply, {ok, Qid}, St};
 
-handle_cast({async_pop_req, W, S}, #st{async_rx=AsyncRx0}=St) ->
+handle_call({async_pop_req, W, S, T}, _F, #st{async_rx=AsyncRx0}=St) ->
     R = make_ref(),
-    Rq = #async_req{sender=S, window_sz=W, ref=R},
+    Rq = #async_req{sender=S, window_sz=W, ref=R, t1=T},
     AsyncRx1 = queue:in(Rq, AsyncRx0),
     erlang:send_after(500, self(), async_pop),
     {reply, {ok, R}, St#st{async_rx=AsyncRx1}};
 
-
-handle_call(pop, _F, #st{q=Q}=St) ->
+handle_call({pop, Caller, Time}, _F, #st{q=Q}=St) ->
     case spq:pop(Q) of
         {error, empty} -> 
             {reply, '$empty', St};
         {value, V} ->
+            log(V, Caller, Time),
             {reply, V, St}
     end;
 
@@ -138,12 +139,14 @@ handle_async_pop(AsyncQ, Spq) ->
             case queue:out(AsyncQ) of
                 {empty, AsyncQ} ->
                     {noreq, AsyncQ};
-                {{value, #async_req{sender=S, window_sz=W, ref=Ref}}, AsyncQ1} ->
+                {{value, #async_req{sender=S, window_sz=W, ref=Ref, t1=T1}}, AsyncQ1} ->
                     case is_process_alive(S) of
                         false ->
+                            %% log dead requester?
                             handle_async_pop(AsyncQ1, Spq);
                         true ->
                             Items = spq:pop(Spq, W),
+                            log(Items, S, T1),
                             S ! {Ref, rxq_data, Items},
                             {ok, AsyncQ1}
                     end
