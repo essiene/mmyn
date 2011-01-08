@@ -6,7 +6,7 @@
 -export([init/1,handle_call/3,handle_cast/2,
         handle_info/2,terminate/2,code_change/3]).
 
--export([start_link/0, req/6, status/2]).
+-export([start_link/0, req/8, status/2]).
 
 
 -record(st, {tbl}).
@@ -14,17 +14,18 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-req(Host, Port, SystemId, RxId, CallbackModule, #req{}=Req0) ->
+req(Tid, Host, Port, SystemId, RxId, WorkerId, Handler, #req{}=Req0) ->
     Req = Req0#req{datetime=now()},
     Tlog = #tlog{
-        tid=tid(),
+        tid=Tid,
         node=node(),
         smsc=Host,
         port=Port,
         system_id=SystemId,
         rxid=RxId,
-        rxpid=self(),
-        handler=CallbackModule,
+        wid=WorkerId,
+        wpid=self(),
+        handler=Handler,
         req=Req},
     gen_server:call(?MODULE, {req, Tlog}).
 
