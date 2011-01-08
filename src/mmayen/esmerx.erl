@@ -11,16 +11,13 @@
         terminate/2,
         code_change/3]).
 
--export([start_link/1, start/1, stop/1]).
+-export([start_link/1, stop/1]).
 
 -record(st, {host, port, system_id, password, id}).
 
 
 start_link(Id) ->
     gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [esmerx, Id]}}]).
-
-start(Id) ->
-    gen_esme34:start(?MODULE, [?SMSC_HOST, ?SMSC_PORT, ?SYSTEM_ID, ?PASSWORD, simreg_services, Id], []).
 
 stop(Pid) ->
     gen_esme34:cast(Pid, stop).
