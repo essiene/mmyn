@@ -37,8 +37,11 @@ handle_tx(_, _, St) ->
 	{noreply, St}. 
 
 
-handle_rx(#pdu{sequence_number=Snum}=Pdu, #st{id=Id}=St) ->
-    {ok, Qid} = rxq:push(#rxq_req{rxid=Id, pdu=Pdu}),
+handle_rx(#pdu{sequence_number=Snum}=Pdu, 
+          #st{id=Id, host=H, port=P, system_id=Sid}=St) ->
+
+    {ok, Qid} = rxq:push(#rxq_req{rxid=Id, pdu=Pdu, 
+                          host=H, port=P, system_id=Sid}),
     DeliverSmResp = #deliver_sm_resp{},
     {tx, {?ESME_ROK, Snum, DeliverSmResp, Qid}, St};
     
