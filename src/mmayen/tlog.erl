@@ -95,11 +95,7 @@ code_change(_OldVsn, St, _Extra) ->
 
 % Privates
 
-tid() ->
-    {MegaSecs, Secs, MicroSecs} = now(),
-    lists:flatten(io_lib:format("~6.10.0B~6.10.0B~6.10.0B", [MegaSecs, Secs, MicroSecs])).
-
-to_string(#tlog{tid=Tid, rxid=Rxid, rxpid=RxPid, smsc=Smsc, port=Port,
+to_string(#tlog{tid=Tid, rxid=Rxid, wid=Wid, wpid=WPid, smsc=Smsc, port=Port,
         system_id=SystemId, handler=Handler, req=Req, res=Res}) ->
 
     #req{datetime=DateTime0, seqnum=Seqnum, src=RqSrc, dst=RqDst, msg=RqMsg0} = Req,
@@ -128,7 +124,7 @@ to_string(#tlog{tid=Tid, rxid=Rxid, rxpid=RxPid, smsc=Smsc, port=Port,
 	RqMsg = util:replace(RqMsg0, "\n", "+"),
 	RsMsg = util:replace(RsMsg0, "\n", "+"),
 
-    lists:flatten(io_lib:format("~s|~s|~.2f|~p|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~p|~s|~b|~s|~p|~p", [Tid, DateTime, Rt, Rxid, 
+    lists:flatten(io_lib:format("~s|~s|~.2f|~p|~p|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~p|~s|~b|~s|~p|~p", [Tid, DateTime, Rt, Wid, Rxid, 
             RqSrc, RqDst, RqMsg, RsSrc, RsDst, RsMsg, Handler, Status, Op, Code, Detail, 
-            Extra, Smsc, Port, SystemId, Seqnum, RxPid])).
+            Extra, Smsc, Port, SystemId, Seqnum, WPid])).
 
