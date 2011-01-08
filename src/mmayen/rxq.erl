@@ -150,3 +150,23 @@ handle_async_pop(AsyncQ, Spq) ->
             end
     end.
 
+
+log(#rxq_req{id=Id, t1=T1}, Caller, RequestTime) ->
+    T2 = now(),
+    WaitTime = timer:now_diff(T2, T1) div 1000,
+    CallerWaitTime = timer:now_diff(T2, RequestTime) div 1000,
+    Log = #log{qid=Id, rwait=WaitTime, caller=Caller, cwait=CallerWaitTime},
+    log(Log);
+
+log([#rxq_req{}=H|T], Caller, RequestTime) ->
+    log(H, Caller, RequestTime),
+    log(T, Caller, RequestTime).
+
+
+log(#log{qid=Id, rwait=Rwt, caller=Caller, cwait=Cwt}) ->
+
+    Tstmp0 = calendar:now_to_local_time(now()),
+    Tstmp = httpd_util:rfc1123_date(Tstmp0),
+
+    Log=lists:flatten(io_lib:format("~s|~p|~.2f|~2.f|~p", [Tstmp,Id,Rwt,Cwt,Caller])),
+    ok = log4erl:log(?LOGGER, debug, "~s", [Log]).
