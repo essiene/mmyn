@@ -156,8 +156,8 @@ handle_async_pop(AsyncQ, Spq) ->
 
 log(#rxq_req{id=Id, t1=T1}, Caller, RequestTime) ->
     T2 = now(),
-    WaitTime = timer:now_diff(T2, T1) div 1000,
-    CallerWaitTime = timer:now_diff(T2, RequestTime) div 1000,
+    WaitTime = timer:now_diff(T2, T1)/1000,
+    CallerWaitTime = timer:now_diff(T2, RequestTime)/1000,
     Log = #log{qid=Id, rwait=WaitTime, caller=Caller, cwait=CallerWaitTime},
     log(Log);
 
