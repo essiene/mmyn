@@ -47,7 +47,7 @@ init([]) ->
     AddAppender = fun () ->
         case spq:open('.rxq.q') of
             {ok, Q} ->
-                case log4erl:add_file_appender(?LOGGER, file_logger_qlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
+                case log4erl:add_file_appender(?LOGGER, file_logger_rxqlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
                     {ok, _} ->
                         StartNormal(Q);
                     {error, {already_started, _}} ->
