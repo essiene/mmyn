@@ -10,7 +10,7 @@
 -export([async_pop/1, asyncq/0]).
 
 -record(st, {q, async_rx}).
--record(async_req, {sender, window_sz}).
+-record(async_req, {sender, window_sz, ref}).
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
@@ -77,6 +77,14 @@ handle_call({push, #rxq_req{}=Item}, _F, #st{q=Q}=St) ->
     spq:push(Q, Item#rxq_req{t1=now(), id=Qid}),
     {reply, {ok, Qid}, St};
 
+handle_cast({async_pop_req, W, S}, #st{async_rx=AsyncRx0}=St) ->
+    R = make_ref(),
+    Rq = #async_req{sender=S, window_sz=W, ref=R},
+    AsyncRx1 = queue:in(Rq, AsyncRx0),
+    erlang:send_after(500, self(), async_pop),
+    {reply, {ok, R}, St#st{async_rx=AsyncRx1}};
+
+
 handle_call(pop, _F, #st{q=Q}=St) ->
     case spq:pop(Q) of
         {error, empty} -> 
@@ -92,12 +100,6 @@ handle_call(ping, _F, #st{q=Q, async_rx=ARx}=St) ->
 
 handle_call(R, _F, St) ->
     {reply, {error, {illegal_request, R}}, St}.
-
-handle_cast({async_pop_req, W, S}, #st{async_rx=AsyncRx0}=St) ->
-    Rq = #async_req{sender=S, window_sz=W},
-    AsyncRx1 = queue:in(Rq, AsyncRx0),
-    erlang:send_after(500, self(), async_pop),
-    {noreply, St#st{async_rx=AsyncRx1}};
 
 handle_cast(_R, St) ->
     {noreply, St}.
@@ -136,13 +138,13 @@ handle_async_pop(AsyncQ, Spq) ->
             case queue:out(AsyncQ) of
                 {empty, AsyncQ} ->
                     {noreq, AsyncQ};
-                {{value, #async_req{sender=S, window_sz=W}}, AsyncQ1} ->
+                {{value, #async_req{sender=S, window_sz=W, ref=Ref}}, AsyncQ1} ->
                     case is_process_alive(S) of
                         false ->
                             handle_async_pop(AsyncQ1, Spq);
                         true ->
                             Items = spq:pop(Spq, W),
-                            S ! {self(), rxq_data, Items},
+                            S ! {Ref, rxq_data, Items},
                             {ok, AsyncQ1}
                     end
             end
