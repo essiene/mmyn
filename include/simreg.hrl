@@ -6,13 +6,7 @@
 
 -record(txq_req, {id, src, dst, message, t1, module}).
 
--record(rxq_req, {id, pdu, t1, rxid}).
-
--define(SMSC_HOST, "10.200.213.4").
--define(SMSC_PORT, 10000).
--define(SYSTEM_ID, "cisaccount").
--define(PASSWORD, "cisa").
--define(NUM_RX, 10).
+-record(rxq_req, {id, pdu, t1, rxid, host, port, system_id}).
 
 -define(WSDL, "<?xml version='1.0' encoding='UTF-8'?>
 <s0:definitions name='SendSmsServiceDefinitions' targetNamespace='http://mtnn/eai/simreg/ws/sreg' xmlns:s0='http://schemas.xmlsoap.org/wsdl/' xmlns:s1='http://mtnn/eai/simreg/ws/sreg' xmlns:s2='http://schemas.xmlsoap.org/wsdl/soap/'>
