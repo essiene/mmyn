@@ -161,6 +161,8 @@ log(#rxq_req{id=Id, t1=T1}, Caller, RequestTime) ->
     Log = #log{qid=Id, rwait=WaitTime, caller=Caller, cwait=CallerWaitTime},
     log(Log);
 
+log([], _, _) ->
+    ok;
 log([#rxq_req{}=H|T], Caller, RequestTime) ->
     log(H, Caller, RequestTime),
     log(T, Caller, RequestTime).
