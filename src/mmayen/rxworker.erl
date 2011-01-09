@@ -15,10 +15,7 @@
 
 
 start_link(Id) ->
-    gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [rxworker, Id]}}]).
-
-start(Id) ->
-    gen_esme34:start(?MODULE, [Id], []).
+    gen_esme34:start_link(?MODULE, [Id], []).
 
 stop(Pid) ->
     gen_esme34:cast(Pid, stop).
