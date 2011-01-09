@@ -90,7 +90,7 @@ notify(Src, [Msisdn|Rest], Msg) when is_list(Msg) ->
     send(Src, Msisdn, Msg),
     notify(Src, Rest, Msg);
 notify(Src, MsisdnList, {error, {Op, Code, Message}}) ->
-    notify(Src, MsisdnList, util:sms_format_msg("~p~n~p~n~p", [Op, Code, Message]));
+    notify(Src, MsisdnList, util:sms_format_msg("~p~n~b~n~p", [Op, Code, Message]));
 notify(Src, MsisdnList, {error, Reason}) ->
     notify(Src, MsisdnList, util:sms_format_msg("~p", [Reason])).
 
