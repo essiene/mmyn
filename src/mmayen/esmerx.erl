@@ -23,7 +23,7 @@ stop(Pid) ->
     gen_esme34:cast(Pid, stop).
 
 init([Id]) ->
-    {Host, Port, SystemId, Password} = util:smsc_params(),
+    {Host, Port, SystemId, Password} = util:esmerx_params(),
 
     {ok, 
         {Host, Port, #bind_receiver{system_id=SystemId, password=Password}}, 

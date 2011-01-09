@@ -1,6 +1,6 @@
 -module(util).
--export([soap_request/5, smsc_params/0, routing_params/0, sms_format_msg/2, notify_params/0,
-		replace/3]).
+-export([soap_request/5, esmerx_params/0, esmetx_params/0, routing_params/0, 
+        sms_format_msg/2, notify_params/0, replace/3]).
 
 -include("simreg.hrl").
 
@@ -27,11 +27,18 @@ soap_request(Url, RqHdrs, RqBody, RsFun, Op) ->
             #soap_response{status=1000, message=Msg, op=Op, raw_req=RqBody, raw_res=""}
     end.
 
-smsc_params() -> 
-    {ok, Host} = application:get_env(smsc_host), 
-    {ok, Port} = application:get_env(smsc_port), 
-    {ok, SystemId} = application:get_env(smsc_username), 
-    {ok, Password} = application:get_env(smsc_password), 
+esmerx_params() -> 
+    {ok, Host} = application:get_env(esmerx_smsc_host), 
+    {ok, Port} = application:get_env(esmerx_smsc_port), 
+    {ok, SystemId} = application:get_env(esmerx_smsc_username), 
+    {ok, Password} = application:get_env(esmerx_smsc_password), 
+    {Host, Port, SystemId, Password}.
+
+esmetx_params() -> 
+    {ok, Host} = application:get_env(esmetx_smsc_host), 
+    {ok, Port} = application:get_env(esmetx_smsc_port), 
+    {ok, SystemId} = application:get_env(esmetx_smsc_username), 
+    {ok, Password} = application:get_env(esmetx_smsc_password), 
     {Host, Port, SystemId, Password}.
 
 notify_params() -> 

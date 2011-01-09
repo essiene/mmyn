@@ -36,7 +36,7 @@ check_and_send(Pid) ->
     gen_esme34:cast(Pid, check_and_send).
 
 init([Id]) ->
-    {Host, Port, SystemId, Password} = util:smsc_params(),
+    {Host, Port, SystemId, Password} = util:esmetx_params(),
     {ok, {Min, Max, Delta}} = application:get_env(esmetx_backoff),
 	Mfa = {?MODULE, check_and_send, [self()]},
 	Backoff = {Min, Max, Delta, Mfa},
