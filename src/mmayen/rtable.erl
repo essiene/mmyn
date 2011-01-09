@@ -77,12 +77,12 @@ route(Tbl, #sms_req{}=SmsReq) ->
     case find_rule(Tbl, SmsReq) of
         {error, norule} ->
             {error, route_not_found};
-        {ok, {_,_,_,Handler}=Rule} ->
-            case is_allowed(Rule, SmsReq) of
+        {ok, {_,_,_,Handler}=Rule, RouteData} ->
+            case is_allowed(Rule, #sms_req{from=From}=SmsReq) of
                 false ->
                     {error, route_denied};
                 true ->
-                    {ok, Handler}
+                    {ok, Handler, RouteData#route_data{from=From}}
             end
     end.
 
@@ -103,7 +103,9 @@ find_rule([{_,To,Keywords,_}=H|Tail], #sms_req{to=To, msg=Msg}=SmsReq) ->
         false ->
             find_rule(Tail, SmsReq);
         true -> 
-            {ok, H}
+            Msg0 = lists:sublist(Msg, length(Keywords)+1, length(Msg)),
+            D = #route_data{to=To, keywords=Keywords, msg=Msg0},
+            {ok, H, D}
     end;
 find_rule([{_,_,_,_}|Tail], SmsReq) ->
     find_rule(Tail, SmsReq).
