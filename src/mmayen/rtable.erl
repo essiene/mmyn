@@ -91,7 +91,7 @@ find_rule([{_,To,Keywords,_}=H|Tail], #sms_req{to=To, msg=Msg}=SmsReq) ->
         true -> 
             {ok, H}
     end;
-find_rule([{_,_,_,_}|Tail], #sms_req{to=To}=SmsReq) ->
+find_rule([{_,_,_,_}|Tail], SmsReq) ->
     find_rule(Tail, SmsReq).
 
 is_allowed({[], _,_,_}, _) ->
@@ -100,8 +100,8 @@ is_allowed({AllowList,_,_,_}, #sms_req{from=From}) ->
     is_allowed(AllowList, From);
 is_allowed([], _) ->
     false;
-is_allowed([From|Tail], From) ->
+is_allowed([From|_], From) ->
     true;
-is_allowed([H|Tail], From) ->
+is_allowed([_|Tail], From) ->
     is_allowed(Tail, From).
 
