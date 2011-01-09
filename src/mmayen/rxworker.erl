@@ -12,7 +12,7 @@
 
 -export([start_link/1, stop/1, ping/1]).
 
--record(st, {id, notify_msisdns, notify_sender, async_ref}).
+-record(st, {id, notify_msisdns, notify_sender, async_ref, rxq_ref}).
 
 
 start_link(Id) ->
@@ -46,8 +46,13 @@ handle_info({Ref, rxq_data, DataList}, #st{id=Id, async_ref=Ref}=St) ->
     {noreply, St#st{async_ref=NewRef}};
 
 handle_info(timeout, #st{id=Id}=St) ->
+    RxqRef = erlang:monitor(process, rxq),
     {ok, Ref} = rxq:async_pop(1,Id),
-    {noreply, St#st{async_ref=Ref}};
+    {noreply, St#st{async_ref=Ref, rxq_ref=RxqRef}};
+
+handle_info({'DOWN', RxqRef, _, _, _}, #st{rxq_ref=RxqRef}=St) ->
+    erlang:send_after(11000, self(), timeout),
+    {noreply, St#st{async_ref=undefined}};
 
 handle_info(_, St) ->
     {noreply, St}.
