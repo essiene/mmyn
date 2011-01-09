@@ -199,9 +199,13 @@ dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw,
         {noreply, Status} -> 
             log_status(Qid, Status), 
             notify(St, Status); 
-        {reply, {Src, Dst, Msg}, Status} -> 
-            log_status(Qid, {Src, Dst, Msg}, Status), 
-            send(Src, Dst, Msg), 
-            notify(St, Status) 
+        {reply, {RSrc, RDst, RMsg}, Status} -> 
+            log_status(Qid, {RSrc, RDst, RMsg}, Status), 
+            send(RSrc, RDst, RMsg), 
+            notify(St, Status);
+        _ ->
+            Status = {error, {dispatch_req, 500, "Callback returned invalid reply"}},
+            log_status(Qid, Status),
+            notify(St, Status)
     end.
 
