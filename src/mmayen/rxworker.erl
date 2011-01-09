@@ -179,9 +179,11 @@ process_req(St, [H|T]) ->
 process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
     case rtable:select_route(Pdu) of
         {error, route_not_found} ->
-            log_req(St, Req, route_not_found);
+            log_req(St, Req, route_not_found),
+            log_status(Qid, error);
         {error, route_denied} ->
-            log_req(St, Req, route_denied);
+            log_req(St, Req, route_denied),
+            log_status(Qid, error);
         {ok, {Module, Function}, RouteData} -> 
             Handler = io_lib:format("erlang://~s/~s", [Module, Function]),
             log_req(St, Req, Handler),
