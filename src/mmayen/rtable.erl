@@ -39,13 +39,17 @@ route(Tbl, Seperator, #pdu{body=#deliver_sm{source_addr=From,
     route(Tbl, SmsReq).
 
 
-route(Tbl, #sms_req{to=To}) ->
-    case find_rule(Tbl, To) of
+route(Tbl, #sms_req{}=SmsReq) ->
+    case find_rule(Tbl, SmsReq) of
         {error, norule} ->
             {error, route_not_found};
-        {ok, Rule} ->
-            %do something with rule
-            ok
+        {ok, {_,_,_,Handler}=Rule} ->
+            case is_allowed(Rule, SmsReq) of
+                false ->
+                    {error, route_denied};
+                true ->
+                    {ok, Handler}
+            end
     end.
 
 
@@ -60,8 +64,24 @@ preprocess(Msg0, Seperator) ->
 
 find_rule([], _) ->
     {error, norule};
-find_rule([{_,To,_,_}=H|_], To) ->
-    {ok, H};
-find_rule([{_,_,_,_}|Tail], To) ->
-    find_rule(Tail, To).
+find_rule([{_,To,Keywords,_}=H|Tail], #sms_req{to=To, msg=Msg}=SmsReq) ->
+    case lists:prefix(Keywords, Msg) of
+        false ->
+            find_rule(Tail, SmsReq);
+        true -> 
+            {ok, H}
+    end;
+find_rule([{_,_,_,_}|Tail], #sms_req{to=To}=SmsReq) ->
+    find_rule(Tail, SmsReq).
+
+is_allowed({[], _,_,_}, _) ->
+    true;
+is_allowed({AllowList,_,_,_}, #sms_req{from=From}) -> 
+    is_allowed(AllowList, From);
+is_allowed([], _) ->
+    false;
+is_allowed([From|Tail], From) ->
+    true;
+is_allowed([H|Tail], From) ->
+    is_allowed(Tail, From).
 
