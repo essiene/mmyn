@@ -1,7 +1,8 @@
 -module(rtable).
 -behaviour(gen_server).
+-include("simreg.hrl").
 
--export([route/1]).
+-export([route/2]).
 
 -record(st_rtable, {t}).
 -record(sms_req, {from, to, msg}).
