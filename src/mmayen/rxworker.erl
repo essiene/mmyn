@@ -25,7 +25,7 @@ stop(Pid) ->
 
 init([Id]) ->
     {NotifyMsisdns, NotifySender} = util:notify_params(),
-    {ok, #st{id=Id, notify_msisdns=NotifyMsisdns, notify_sender=NotifySender}}.
+    {ok, #st{id=Id, notify_msisdns=NotifyMsisdns, notify_sender=NotifySender}, 5000}.
 
 
 handle_call(Req, _From, St) ->
@@ -36,9 +36,14 @@ handle_cast(stop, St) ->
 handle_cast(_Req, St) ->
     {noreply, St}.
 
-handle_info({Ref, rxq_data, #rxq_req{}=Req}, #st{async_ref=Ref}=St) ->
-    {ok, St1} = process_req(St, Req),
-    {noreply, St1};
+handle_info({Ref, rxq_data, #rxq_req{}=Req}, #st{id=Id, async_ref=Ref}=St) ->
+    {ok, NewRef} = rxq:async_pop(1,Id),
+    process_req(St, Req),
+    {noreply, St#st{async_ref=NewRef}};
+
+handle_info(timeout, #st{id=Id}=St) ->
+    {ok, Ref} = rxq:async_pop(1,Id),
+    {noreply, St#st{async_ref=Ref}};
 
 handle_info(_, St) ->
     {noreply, St}.
@@ -138,7 +143,8 @@ log_status(Tid, {From, To, Msg}, {Status, {Op, Code, Detail, Extra}}) ->
 
     tlog:status(Tid, Res).
 
-process_req(St, #rxq_req{id=Qid}=Req) ->
+process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
+    error_logger:info_msg("RECEIVED: ~w", [Pdu]),
     %log_req(St, Req, 'generic_handler'),
 %
 %    {ok, WordList} = preprocess(Msg),
