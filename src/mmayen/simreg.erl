@@ -71,6 +71,10 @@ init([]) ->
         {rxq, start_link, []},
         permanent, 5000, worker, [rxq]},
 
+    RTable  = {rtable,
+        {rtable, start_link, []},
+        permanent, 5000, worker, [rtable]},
+
     RxSup = {rx_sup,
         {rx_sup, start_link, []},
         permanent, infinity, supervisor, [rx_sup]},
@@ -85,6 +89,6 @@ init([]) ->
         {simreg_misultin, start_link, []},
         permanent, 5000, worker, [simreg_misultin]},
 
-    Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, RxQ, RxSup, RxNanny, Webservice],
+    Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, RxQ, RTable, RxSup, RxNanny, Webservice],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.
