@@ -40,8 +40,8 @@ notify_params() ->
     {Msisdns, Sender}.
 
 routing_params() ->
-    {ok, Separators} = application:get_env(router, msg_seperator),
-    {ok, Table} = application:get_env(router, rtable),
+    {ok, Separators} = application:get_env(msg_separators),
+    {ok, Table} = application:get_env(rtable),
     {Separators, Table}.
 
 

@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 -include("simreg.hrl").
 
--export([start_link/0, select_route/2]).
+-export([start_link/0, select_route/1]).
 
 -export([init/1,handle_call/3,handle_cast/2,handle_info/2,
          terminate/2,code_change/3]).
@@ -13,12 +13,12 @@
 -record(sms_req, {from, to, msg}).
 
 start_link() ->
-    gen_server:start_link(?MODULE, [], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-select_route(Ref, #pdu{}=Pdu) ->
+select_route(#pdu{}=Pdu) ->
     % log the time it takes to find a route
-    gen_server:call(Ref, {select_route, Pdu});
-select_route(_, _) ->
+    gen_server:call(?MODULE, {select_route, Pdu});
+select_route(_) ->
     {error, non_routable_data}.
 
 init([]) ->
