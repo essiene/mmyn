@@ -49,10 +49,6 @@ terminate(_, _) ->
 code_change(_OldVsn, St, _Extra) ->
     {noreply, St}.
 
-preprocess(Msg0) ->
-    Msg = string:strip(Msg0),
-    Lower = string:to_lower(Msg),
-    {ok, string:tokens(Lower, "\n\t ")}.
 
 send(_, _, {From, To, Reply}) ->
     sms:send(From, To, Reply, rxworker);
