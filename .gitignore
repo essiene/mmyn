@@ -12,5 +12,5 @@ erl_crash.dump
 *.zip
 *.rpm
 *.patch
-rel/simreg
+rel/mmyn
 ebin

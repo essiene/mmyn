@@ -1,11 +1,11 @@
-{application, simreg,
+{application, mmyn,
  [
-    {description, "SimReg is the MTNN SIM Registration SMS application module"}, 
+    {description, "Mmyn is a lean and mean SMPP server"}, 
     {vsn, "1.0"}, 
     {registered, 
       [backoff, txq, tx_sup, tx_nanny, rx_sup, rx_nanny, simreg_misultin, simreg, tlog]}, 
     {applications, [kernel, stdlib, sasl, ibrowse, log4erl, erlsom, misultin, smpp34pdu, smpp34]}, 
-    {mod, {simreg, []}},
+    {mod, {mmyn, []}},
     {env, []}
  ]
 }.

@@ -3,7 +3,7 @@
 
 %% @doc TEMPLATE.
 
--module(simreg).
+-module(mmyn).
 -include("simreg.hrl").
 
 -author('author <author@example.com>').
@@ -18,9 +18,9 @@
 -export([init/1]).
 
 %% @spec start() -> ok
-%% @doc Start the simreg server.
+%% @doc Start the mmyn server.
 start() ->
-    application:start(simreg, temporary).
+    application:start(mmyn, temporary).
 
 start(_Type, _StartArgs) ->
    start_link(). 
@@ -32,13 +32,13 @@ status() ->
     simreg_manager:status().
 
 %% @spec stop() -> ok
-%% @doc Stop the simreg server.
+%% @doc Stop the mmyn server.
 stop() ->
-    case whereis(simreg) of
+    case whereis(mmyn) of
         undefined -> ok;
         Pid -> exit(Pid, shutdown)
     end,
-    application:stop(simreg).
+    application:stop(mmyn).
 
 stop(_State) ->
     ok.
