@@ -34,9 +34,7 @@
 
 route(Tbl, Seperator, #pdu{body=#deliver_sm{source_addr=From, 
             destination_addr=To, short_message=Msg}}) ->
-
     SmsReq = #sms_req{from=preprocess(From), to=preprocess(To), msg=preprocess(Msg, Seperator)},
-
     route(Tbl, SmsReq).
 
 
