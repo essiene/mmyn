@@ -158,20 +158,29 @@ process_req(St, [H|T]) ->
     process_req(St, H),
     process_req(St, T);
 process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
-    %log_req(St, Req, 'generic_handler'),
-%
-%    {ok, WordList} = preprocess(Msg),
-%
-%    case CbMod:handle_sms(Qid, Src, Dst, WordList, Pdu, CbSt) of
-%       {noreply, Status, CbSt1} ->
-%            log_status(Tid, Status),
-%            notify(St, Status),
-%            {tx, {?ESME_ROK, Snum, DeliverSmResp, Tid}, St#st{callback=Cb#cb{st=CbSt1}}};
-%        {reply, Reply, Status, CbSt1} ->
-%            log_status(Tid, {Dst, Src, Reply}, Status),
-%            send(Dst, Src, Reply),
-%            notify(St, Status),
-%            {tx, {?ESME_ROK, Snum, DeliverSmResp, Tid}, St#st{callback=Cb#cb{st=CbSt1}}}
-%    end.
-ok.
+    case rtable:select_route(Pdu) of
+        {error, route_not_found} ->
+            log_req(St, Req, route_not_found);
+        {error, route_denied} ->
+            log_req(St, Req, route_denied);
+        {ok, {Module, Function}, RouteData} -> 
+            Handler = io_lib:format("erlang://~s/~s", [Module, Function]),
+            log_req(St, Req, Handler),
+            dispatch_req(St, Qid, RouteData, {Module, Function});
+        {ok, Url, RouteData} -> 
+            log_req(St, Req, Url),
+            dispatch_req(St, Qid, RouteData, {http_dispatcher, get})
+    end.
+
+dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw, 
+        msg=Msg}, {Module, Function}) ->
+    case Module:Function(F, To, Kw, Msg) of 
+        {noreply, Status} -> 
+            log_status(Qid, Status), 
+            notify(St, Status); 
+        {reply, {Src, Dst, Msg}, Status} -> 
+            log_status(Qid, {Src, Dst, Msg}, Status), 
+            send(Src, Dst, Msg), 
+            notify(St, Status) 
+    end.
 
