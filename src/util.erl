@@ -1,5 +1,5 @@
 -module(util).
--export([soap_request/5, smsc_params/0, sms_format_msg/2, notify_params/0,
+-export([soap_request/5, smsc_params/0, routing_params/0, sms_format_msg/2, notify_params/0,
 		replace/3]).
 
 -include("simreg.hrl").
@@ -38,6 +38,12 @@ notify_params() ->
     {ok, Msisdns} = application:get_env(notify_msisdns), 
     {ok, Sender} = application:get_env(notify_sender), 
     {Msisdns, Sender}.
+
+routing_params() ->
+    {ok, Separators} = application:get_env(router, msg_seperator),
+    {ok, Table} = application:get_env(router, rtable),
+    {Separators, Table}.
+
 
 
 sms_format_msg(Fmt, Args) ->
