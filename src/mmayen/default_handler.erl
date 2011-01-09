@@ -1,12 +1,12 @@
 -module(default_handler).
--export([noreply/4, echo/4, hello/4]).
+-export([noreply/5, echo/5, hello/5]).
 
 
-noreply(_, _, _, _) ->
+noreply(_, _, _, _, _) ->
     {noreply, ok}.
 
-echo(From, To, _Keywords, Msg) ->
+echo(_Tid, From, To, _Keywords, Msg) ->
     {reply, {To, From, string:join(Msg, " ")}, {ok, {echo, 0}}}.
 
-hello(From, To, _Keywords, _Msg) ->
+hello(_Tid, From, To, _Keywords, _Msg) ->
     {reply, {To, From, "Hello mmyn world!"}, {ok, {hello, 0}}}.
