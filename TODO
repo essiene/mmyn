@@ -1,5 +1,5 @@
 * Make use of erlcfg
-* add commands to simreg script via nodetool:
+* add commands to mmyn script via nodetool:
     start/stop/status tx_nanny
     start/stop/status rx_nanny
     start/stop/status webservice

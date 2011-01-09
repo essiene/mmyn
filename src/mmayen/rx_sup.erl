@@ -1,11 +1,11 @@
 %% @author author <author@example.com>
 %% @copyright YYYY author.
 
-%% @doc Supervisor for the simreg application.
+%% @doc Supervisor for the mmyn application.
 
 -module(rx_sup).
 -author('author <author@example.com>').
--include("simreg.hrl").
+-include("mmyn.hrl").
 
 -behaviour(supervisor).
 

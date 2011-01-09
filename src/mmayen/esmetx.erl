@@ -1,5 +1,5 @@
 -module(esmetx).
--include("simreg.hrl").
+-include("mmyn.hrl").
 -behaviour(gen_esme34).
 
 -export([init/1,

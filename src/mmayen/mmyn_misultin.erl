@@ -1,7 +1,7 @@
--module(simreg_misultin).
+-module(mmyn_misultin).
 -behaviour(gen_server).
 -include_lib("misultin/include/misultin.hrl").
--include("simreg.hrl").
+-include("mmyn.hrl").
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -export([start_link/0, stop/0]).
@@ -56,7 +56,7 @@ handle_http(Req) ->
     Method2 = string:to_lower(Method1),
     Method3 = list_to_atom(Method2),
     Resource = Req:resource([lowercase, urldecode]),
-    simreg_misultin:Method3(Resource, Req).
+    mmyn_misultin:Method3(Resource, Req).
 
 
 get(["sendsms"], Req) ->
@@ -66,7 +66,7 @@ get(["sendsms"], Req) ->
         true -> 
             Req:ok([{"Content-Type", "text/xml"}], ?WSDL);
         false -> 
-            Req:ok([{"Content-Type", "text/plain"}], "Mmayen/1.0\r\nSimReg Services/1.0\r\n")
+            Req:ok([{"Content-Type", "text/plain"}], "Mmayen/1.0\r\nMmyn Services/1.0\r\n")
     end;
 
 get(["send"], Req) ->
@@ -76,7 +76,7 @@ get(["send"], Req) ->
     {"to", Dst} = proplists:lookup("to", QueryString),
     {"msg", Msg} = proplists:lookup("msg", QueryString),
 
-    ok = sms:send(Src, Dst, Msg, simreg_misultin),
+    ok = sms:send(Src, Dst, Msg, mmyn_misultin),
 
     Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n");
 
@@ -84,7 +84,7 @@ get(_, Req) ->
     Req:respond(404, "Foo Found\r\n").
 
 post(["sendsms"], Req) ->
-    #soap_response{status=Status, message=Message} = sms:send("SimReg", Req:get(body), simreg_misultin),
+    #soap_response{status=Status, message=Message} = sms:send("mmyn", Req:get(body), mmyn_misultin),
     Xml0 = io_lib:format(?SENDSMS_RESPONSE_TEMPLATE, [Status, Message]),
     Xml1 = lists:flatten(Xml0),
     Req:ok([{"Content-Type", "text/xml"}], Xml1);

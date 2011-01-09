@@ -1,5 +1,5 @@
--ifndef(simreg).
--define(simreg, true).
+-ifndef(mmyn).
+-define(mmyn, true).
 -include_lib("smpp34pdu/include/smpp34pdu.hrl").
 
 -record(soap_response, {status, message, op, flag, raw_req, raw_res}).

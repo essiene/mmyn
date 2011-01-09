@@ -2,7 +2,7 @@
 -export([soap_request/5, esmerx_params/0, esmetx_params/0, routing_params/0, 
         sms_format_msg/2, notify_params/0, replace/3]).
 
--include("simreg.hrl").
+-include("mmyn.hrl").
 
 -define(SMS_MSG_MAX_LEN, 156).
 

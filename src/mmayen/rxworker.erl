@@ -1,6 +1,6 @@
 -module(rxworker).
 -behaviour(gen_server).
--include("simreg.hrl").
+-include("mmyn.hrl").
 -include("tlog.hrl").
 
 -export([init/1,

@@ -4,7 +4,7 @@
 %% @doc TEMPLATE.
 
 -module(mmyn).
--include("simreg.hrl").
+-include("mmyn.hrl").
 
 -author('author <author@example.com>').
 
@@ -29,7 +29,7 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 status() ->
-    simreg_manager:status().
+    mmyn_manager:status().
 
 %% @spec stop() -> ok
 %% @doc Stop the mmyn server.
@@ -95,9 +95,9 @@ init([]) ->
                                             {rxworker,stop}, {undefined, undefined}]},
         permanent, 5000, worker, [rxwkr_nanny]},
 
-    Webservice = {simreg_misultin,
-        {simreg_misultin, start_link, []},
-        permanent, 5000, worker, [simreg_misultin]},
+    Webservice = {mmyn_misultin,
+        {mmyn_misultin, start_link, []},
+        permanent, 5000, worker, [mmyn_misultin]},
 
     Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, 
         RxQ, RTable, RxSup, RxNanny, RxWkrSup, RxWkrNanny, Webservice],

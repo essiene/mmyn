@@ -1,5 +1,5 @@
--module(sms).
--include("simreg.hrl").
+    -module(sms).
+-include("mmyn.hrl").
 
 -export([send/3, send/4]).
 
