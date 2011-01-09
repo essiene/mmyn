@@ -1,4 +1,5 @@
 -module(rxworker).
+-behaviour(gen_server).
 -include("simreg.hrl").
 -include("tlog.hrl").
 
@@ -9,22 +10,27 @@
         terminate/2,
         code_change/3]).
 
--export([start_link/1, start/1, stop/1]).
+-export([start_link/1, stop/1, ping/1]).
 
 -record(st, {id, notify_msisdns, notify_sender, async_ref}).
 
 
 start_link(Id) ->
-    gen_esme34:start_link(?MODULE, [Id], []).
+    gen_server:start_link(?MODULE, [Id], []).
 
 stop(Pid) ->
-    gen_esme34:cast(Pid, stop).
+    gen_server:cast(Pid, stop).
+
+ping(Pid) ->
+    gen_server:call(Pid, ping).
 
 init([Id]) ->
     {NotifyMsisdns, NotifySender} = util:notify_params(),
     {ok, #st{id=Id, notify_msisdns=NotifyMsisdns, notify_sender=NotifySender}, 5000}.
 
 
+handle_call(ping, _, #st{id=Id}=St) ->
+    {reply, {ok, {Id, pong}}, St};
 handle_call(Req, _From, St) ->
     {reply, {error, Req}, St}.
 
