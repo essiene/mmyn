@@ -6,7 +6,7 @@ noreply(_, _, _, _) ->
     {noreply, ok}.
 
 echo(From, To, _Keywords, Msg) ->
-    {reply, {To, From, string:join(Msg, " ")}, ok}.
+    {reply, {To, From, string:join(Msg, " ")}, {ok, {echo, 0}}}.
 
 hello(From, To, _Keywords, _Msg) ->
-    {reply, {To, From, "Hello mmyn world!"}, ok}.
+    {reply, {To, From, "Hello mmyn world!"}, {ok, {hello, 0}}}.
