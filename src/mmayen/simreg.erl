@@ -85,10 +85,21 @@ init([]) ->
                                             {esmerx,stop}, {undefined, undefined}]},
         permanent, 5000, worker, [rx_nanny]},
 
+    RxWkrSup = {rxwkr_sup,
+        {rxwkr_sup, start_link, []},
+        permanent, infinity, supervisor, [rxwkr_sup]},
+
+    RxWkrNanny = {rxwkr_nanny,
+        {nanny, start_link, [rxwkr_nanny, {rxwkr_nanny_num_children, rxwkr_nanny_backoff}, 
+                                            {rxwkr_sup,start_child}, 
+                                            {rxworker,stop}, {undefined, undefined}]},
+        permanent, 5000, worker, [rxwkr_nanny]},
+
     Webservice = {simreg_misultin,
         {simreg_misultin, start_link, []},
         permanent, 5000, worker, [simreg_misultin]},
 
-    Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, RxQ, RTable, RxSup, RxNanny, Webservice],
+    Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, 
+        RxQ, RTable, RxSup, RxNanny, RxWkrSup, RxWkrNanny, Webservice],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.
