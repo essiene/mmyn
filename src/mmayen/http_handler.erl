@@ -1,4 +1,6 @@
 -module(http_handler).
+-include("simreg.hrl").
+-include("jsonerl.hrl").
 -export([get/6]).
 
 
@@ -38,30 +40,29 @@ fetch_url(Url) ->
 %               "code": integer(),
 %               "details": string(),
 %               "sendresponse_flag": boolean(),
-%               "sms_response" : {
-%                               "from":string(),
-%                               "to":string(),
-%                               "message":string()},
+%               "from":string(),
+%               "to":string(),
+%               "message":string()
 %              }
 %
-process_response(Body) ->
-    process_response(?json_to_record(http_response, Body));
 process_response(#http_response{sendresponse_flag=false}=R) ->
     noreply(R);
-process_response(#http_response{sms_response=SmsResponse}=R) ->
-    Sr = ?json_to_record(SmsResponse),
-    reply(R, Sr).
+process_response(#http_response{}=R) ->
+    reply(R);
+process_response(Body) ->
+    process_response(?json_to_record(http_response, Body)).
+
 
 noreply(#http_response{}=R) ->
     {noreply, to_status(R)}.
 
-reply(#http_response{}=R, #sms_response{}=Sr) ->
-    {reply, to_response(Sr), to_status(R)}.
+reply(#http_response{}=R) ->
+    {reply, to_response(R), to_status(R)}.
 
 to_status(#http_response{success_flag=true, operation=Op, code=C, details=D}) ->
-    {ok, {Op, C, D}};
+    {ok, {binary_to_list(Op), C, binary_to_list(D)}};
 to_status(#http_response{success_flag=false, operation=Op, code=C, details=D}) ->
-    {error, {Op, C, D}}.
+    {error, {binary_to_list(Op), C, binary_to_list(D)}}.
 
-to_response(#sms_response{from=F, to=T, message=M}) ->
-    {F, T, M}.
+to_response(#http_response{from=F, to=T, message=M}) ->
+    {binary_to_list(F), binary_to_list(T), binary_to_list(M)}.

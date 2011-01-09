@@ -12,9 +12,8 @@
 
 -record(http_response, {success_flag, operation, code, 
                         details, sendresponse_flag,
-                        sms_response}).
+                        from,to,message}).
 
--record(sms_response, {from, to, message}).
 
 -define(WSDL, "<?xml version='1.0' encoding='UTF-8'?>
 <s0:definitions name='SendSmsServiceDefinitions' targetNamespace='http://mtnn/eai/simreg/ws/sreg' xmlns:s0='http://schemas.xmlsoap.org/wsdl/' xmlns:s1='http://mtnn/eai/simreg/ws/sreg' xmlns:s2='http://schemas.xmlsoap.org/wsdl/soap/'>
