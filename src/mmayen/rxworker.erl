@@ -115,6 +115,25 @@ log_req(#st{id=Id}, #rxq_req{id=Qid, rxid=RxId, host=Host, port=Port,
             Handler,
             Req).
 
+
+%% 
+% status() =  
+%       flag() |
+%       {flag(), {operation(), code()}} |
+%       {flag(), {operation(), code(), details()}} |
+%       {flag(), {operation(), code(), details(), extra()}}.
+%
+% flag() = ok | error.
+%
+% operation() = atom().
+%
+% code() = integer().
+%
+% details() = iolist().
+%
+% extra() = iolist(). 
+%
+%
 log_status(Tid, Status) ->
     log_status(Tid, undefined, Status).
 
@@ -152,7 +171,7 @@ log_status(Tid, {From, To, Msg}, {Status, {Op, Code, Detail, Extra}}) ->
 
     tlog:status(Tid, Res).
 
-process_req(St, []) ->
+process_req(_, []) ->
     ok;
 process_req(St, [H|T]) ->
     process_req(St, H),
