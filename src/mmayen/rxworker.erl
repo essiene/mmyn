@@ -39,9 +39,9 @@ handle_cast(stop, St) ->
 handle_cast(_Req, St) ->
     {noreply, St}.
 
-handle_info({Ref, rxq_data, #rxq_req{}=Req}, #st{id=Id, async_ref=Ref}=St) ->
+handle_info({Ref, rxq_data, DataList}, #st{id=Id, async_ref=Ref}=St) ->
     {ok, NewRef} = rxq:async_pop(1,Id),
-    process_req(St, Req),
+    process_req(St, DataList),
     {noreply, St#st{async_ref=NewRef}};
 
 handle_info(timeout, #st{id=Id}=St) ->
@@ -146,8 +146,12 @@ log_status(Tid, {From, To, Msg}, {Status, {Op, Code, Detail, Extra}}) ->
 
     tlog:status(Tid, Res).
 
+process_req(St, []) ->
+    ok;
+process_req(St, [H|T]) ->
+    process_req(St, H),
+    process_req(St, T);
 process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
-    error_logger:info_msg("RECEIVED: ~w", [Pdu]),
     %log_req(St, Req, 'generic_handler'),
 %
 %    {ok, WordList} = preprocess(Msg),
