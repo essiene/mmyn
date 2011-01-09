@@ -7,7 +7,7 @@
 
 -export([route/2]).
 
--record(st_rtable, {t}).
+-record(st_rtable, {sep, t}).
 -record(sms_req, {from, to, msg}).
 
 
@@ -54,11 +54,10 @@ code_change(_OldVsn, St, _Extra) ->
 % ]
 
 
-route(Tbl, Seperator, #pdu{body=#deliver_sm{source_addr=From, 
+route(#st_rtable{t=Tbl, sep=S}, #pdu{body=#deliver_sm{source_addr=From, 
             destination_addr=To, short_message=Msg}}) ->
-    SmsReq = #sms_req{from=preprocess(From), to=preprocess(To), msg=preprocess(Msg, Seperator)},
-    route(Tbl, SmsReq).
-
+    SmsReq = #sms_req{from=preprocess(From), to=preprocess(To), msg=preprocess(Msg, S)},
+    route(Tbl, SmsReq);
 
 route(Tbl, #sms_req{}=SmsReq) ->
     case find_rule(Tbl, SmsReq) of
