@@ -72,10 +72,11 @@ get(["sendsms"], Req) ->
 get(["send"], Req) ->
     QueryString = Req:parse_qs(),
 
+    {"from", Src} = proplists:lookup("from", QueryString),
     {"to", Dst} = proplists:lookup("to", QueryString),
     {"msg", Msg} = proplists:lookup("msg", QueryString),
 
-    ok = sms:send("SimReg", Dst, Msg, simreg_misultin),
+    ok = sms:send(Src, Dst, Msg, simreg_misultin),
 
     Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n");
 
