@@ -190,12 +190,12 @@ process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
             dispatch_req(St, Qid, RouteData, {Module, Function});
         {ok, Url, RouteData} -> 
             log_req(St, Req, Url),
-            dispatch_req(St, Qid, RouteData, {http_dispatcher, get})
+            dispatch_req(St, Qid, RouteData, {http_handler, get, [Url]})
     end.
 
 dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw, 
-        msg=Msg}, {Module, Function}) ->
-    case Module:Function(F, To, Kw, Msg) of 
+        msg=Msg}, CallbackSpec) ->
+    case callback(CallbackSpec, Qid, F, To, Kw, Msg) of
         {noreply, Status} -> 
             log_status(Qid, Status), 
             notify(St, Status); 
@@ -209,3 +209,7 @@ dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw,
             notify(St, Status)
     end.
 
+callback({M,F}, Tid, From, To, Kw, Msg) ->
+    M:F(Tid, From, To, Kw, Msg);
+callback({M,F,A}, Tid, From, To, Kw, Msg) ->
+    M:F(A, Tid, From, To, Kw, Msg).
