@@ -26,7 +26,8 @@ ping(Pid) ->
 
 init([Id]) ->
     {NotifyMsisdns, NotifySender} = util:notify_params(),
-    {ok, #st{id=Id, notify_msisdns=NotifyMsisdns, notify_sender=NotifySender}, 5000}.
+    erlang:send_after(5000, self(), timeout),
+    {ok, #st{id=Id, notify_msisdns=NotifyMsisdns, notify_sender=NotifySender}}.
 
 
 handle_call(ping, _, #st{id=Id}=St) ->
