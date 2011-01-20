@@ -3,7 +3,7 @@
 
 -export([send/3, send/4]).
 
--record(req, {status=55, msisdn, message, flag}).
+-record(req, {status=55, sender, msisdn, message, flag}).
 
 
 
