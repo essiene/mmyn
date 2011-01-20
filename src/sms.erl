@@ -36,10 +36,14 @@ parse(Xml) ->
 
 process(endDocument, Req) ->
     Req#req{flag=undefined};
+process({characters, X}, #req{flag='SENDER'}=Req) ->
+    Req#req{sender=X, flag=undefined};
 process({characters, X}, #req{flag='MSISDN'}=Req) ->
     Req#req{msisdn=X, flag=undefined};
 process({characters, X}, #req{flag='MESSAGE'}=Req) ->
     Req#req{status=0, message=X, flag=undefined};
+process({startElement, _, "sender", "sms", _}, Req) ->
+    Req#req{flag='SENDER'};
 process({startElement, _, "msisdn", "sms", _}, Req) ->
     Req#req{flag='MSISDN'};
 process({startElement, _, "message", "sms", _}, Req) ->
