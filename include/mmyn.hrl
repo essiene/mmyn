@@ -30,6 +30,11 @@
       <xs:element name='SendSmsRequest'>
         <xs:complexType>
           <xs:sequence>
+            <xs:element minOccurs='0' name='sender' type='xs:string'>
+              <xs:annotation>
+                <xs:documentation>The source address of the message</xs:documentation>
+              </xs:annotation>
+            </xs:element>
             <xs:element minOccurs='1' name='msisdn' type='xs:string'>
               <xs:annotation>
                 <xs:documentation>The phone number of the recipient</xs:documentation>
