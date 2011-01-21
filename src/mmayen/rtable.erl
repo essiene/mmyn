@@ -99,13 +99,20 @@ preprocess(Msg0, Seperator) ->
 find_rule([], _) ->
     {error, norule};
 find_rule([{_,To,Keywords,_}=H|Tail], #sms_req{to=To, msg=Msg}=SmsReq) ->
-    case lists:prefix(Keywords, Msg) of
-        false ->
-            find_rule(Tail, SmsReq);
-        true -> 
-            Msg0 = lists:sublist(Msg, length(Keywords)+1, length(Msg)),
-            D = #route_data{to=To, keywords=Keywords, msg=Msg0},
-            {ok, H, D}
+    %if rule has no keywords, once the shortcode matches, it's a match
+    case length(Keywords) of
+        0 ->
+            Rd = route_data_new(To, Keywords, Msg),
+            {ok, H, Rd};
+        _ ->
+            %check if SMS contains specified keywords
+            case lists:prefix(Keywords, Msg) of
+                false ->
+                    find_rule(Tail, SmsReq);
+                true -> 
+                    Rd = route_data_new(To, Keywords, Msg),
+                   {ok, H, Rd}
+            end
     end;
 find_rule([{_,_,_,_}|Tail], SmsReq) ->
     find_rule(Tail, SmsReq).
@@ -121,3 +128,7 @@ is_allowed([From|_], From) ->
 is_allowed([_|Tail], From) ->
     is_allowed(Tail, From).
 
+route_data_new(To, Keywords, Msg) -> 
+    Msg0 = lists:sublist(Msg, length(Keywords)+1, length(Msg)), 
+    #route_data{to=To, keywords=Keywords, msg=Msg0}.
+ 
