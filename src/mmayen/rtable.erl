@@ -23,6 +23,7 @@ select_route(_) ->
 
 init([]) ->
     {Separators, Table} = util:routing_params(),
+    error_logger:info_msg("Routing table started~n"),
     {ok, #st_rtable{sep=Separators, t=Table}}.
 
 handle_call({select_route, Pdu}, _, St) ->
