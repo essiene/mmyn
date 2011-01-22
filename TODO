@@ -9,29 +9,9 @@
     get statistics on rx tps
 
 * Pull out all other constants into config file
-* When nanny goes down, take down your kids dammit!!!
-  alternatively, find a way to make it such that a new nanny
-  will discover the kids which are still alive,
 
 * Log and track:
     webservice transactions 
-
-* Fully flesh out the mini pluggin framework in the rx module to allow the
-  rx to notify all registered callbacks, instead of just the one
-  callback. This should be a gen_event based framework
-
-* implement gen_sms_handler:send(Src, Dst, Msg) which will use 
-  preconfigured defaults for the plugin for the remaining #submit_sm{} parameters
-
-* esmerx should implement a routing table:
-        {Dst, SEPARATOR} -> Callback |
-        {{Dst, Src}, SEPARATOR} -> Callback
-        {{Dst, Src, [H0,H1,...,Hn|R]}, SEPARATOR} -> Callback
-
-  Also, we would have URL schemes for the various Callback types, e.g.:
-        {erlang, Modulename}
-        {http, http://foo..areas/, get, json}
-        {http, http://.../, post, xml}
 
 
 * Support global configs for all tx/rx and per instance configuration
@@ -41,13 +21,3 @@
   Also, extend this to support virtual instances, which would basically be like
   the entire application with its own seperate configuration, running still
   inside one vm instance.
-
-* Provide view into backoff module. Basically, see inside its State and
-  eventually be able to send this to a console viewer or to a web client viewer
-
-* Provide view into running nannys too
-
-* Receive into a work queue as well, instead of tieing down the rx channels
-
-* Return deliver_sm once the job has been delivered. Do not wait for job to be
-  completed.
