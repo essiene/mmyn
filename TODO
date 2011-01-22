@@ -21,3 +21,7 @@
   Also, extend this to support virtual instances, which would basically be like
   the entire application with its own seperate configuration, running still
   inside one vm instance.
+
+* Allow passing of smpp34 options in the config file, so we no more need
+  to run a separate branch for badly behaved and toy SMSCs
+* Allow passing in a configurable interval for smpp34 enquire_link intervals
