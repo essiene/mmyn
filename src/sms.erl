@@ -9,11 +9,11 @@
 
 send(Src, Xml, Module) ->
     try parse(Xml) of
-        #req{status=0, sender=Sender, msisdn=Msisdn, message=Message} ->
-            send(Sender, Msisdn, Message, Module),
-            #soap_response{status=0, message="Accepted for delivery"};
         #req{status=0, sender=undefined, msisdn=Msisdn, message=Message} ->
             send(Src, Msisdn, Message, Module),
+            #soap_response{status=0, message="Accepted for delivery"};
+        #req{status=0, sender=Sender, msisdn=Msisdn, message=Message} ->
+            send(Sender, Msisdn, Message, Module),
             #soap_response{status=0, message="Accepted for delivery"};
         #req{status=N, msisdn=undefined} ->
             #soap_response{status=N, message="MSISDN unspecified"};
