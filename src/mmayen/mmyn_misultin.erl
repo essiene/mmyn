@@ -72,13 +72,17 @@ get(["sendsms"], Req) ->
 get(["send"], Req) ->
     QueryString = Req:parse_qs(),
 
-    {"from", Src} = proplists:lookup("from", QueryString),
-    {"to", Dst} = proplists:lookup("to", QueryString),
-    {"msg", Msg} = proplists:lookup("msg", QueryString),
-
-    ok = sms:send(Src, Dst, Msg, mmyn_misultin),
-
-    Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n");
+    try deliver_msg(QueryString) of
+        ok ->
+            Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n")
+    catch
+        throw: {required_parameter_missing, Key} ->
+            ErrMsg = lists:concat(["1 : Required parameter missing - '", Key, "'"]),
+            Req:respond(400, ErrMsg);
+        _ : _ ->
+            % log this
+            Req:respond(500, "Internal Error")
+    end;
 
 get(_, Req) ->
     Req:respond(404, "Foo Found\r\n").
@@ -106,3 +110,10 @@ get_value(Key, QueryString) ->
         Value ->
             Value
     end.
+
+deliver_msg(QueryString) ->
+    Src = get_value("from", QueryString),
+    Dst = get_value("to", QueryString),
+    Msg = get_value("msg", QueryString),
+    ok = sms:send(Src, Dst, Msg, mmyn_misultin),
+    ok.
