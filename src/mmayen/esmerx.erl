@@ -17,7 +17,15 @@
 
 
 start_link(Id) ->
-    gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [esmerx, Id]}}]).
+    IgnoreVersion = case application:get_env(esme_ignore_version) of
+        {ok, C} ->
+            C;
+        undefined ->
+            false
+    end,
+    gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [esmerx, Id]}},
+            {ignore_version, IgnoreVersion}]).
+
 
 stop(Pid) ->
     gen_esme34:cast(Pid, stop).

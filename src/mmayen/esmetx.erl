@@ -21,7 +21,14 @@
 -record(st, {host, port, system_id, password, id, esmetx_backoff, awake}).
 
 start_link(Id) ->
-    gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [esmetx, Id]}}]).
+    IgnoreVersion = case application:get_env(esme_ignore_version) of
+        {ok, C} ->
+            C;
+        undefined ->
+            false
+    end,
+    gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [esmetx, Id]}},
+            {ignore_version, IgnoreVersion}]).
 
 start(Id) ->
     gen_esme34:start(?MODULE, [Id], []).
