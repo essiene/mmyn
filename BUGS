@@ -1,0 +1,2 @@
+When a consumer to rxq:async_pop dies, cleanup its POP request, or
+the message inbox overflows and rxq stops responding
