@@ -113,6 +113,21 @@ post(["sendsms"], Req) ->
     Xml0 = io_lib:format(?SENDSMS_RESPONSE_TEMPLATE, [Status, Message]),
     Xml1 = lists:flatten(Xml0),
     Req:ok([{"Content-Type", "text/xml"}], Xml1);
+
+post(["soap", "2.0"], Req) ->
+    Headers = Req:get(headers),
+    try get_value("Soapaction", Headers) of
+        SoapAction ->
+            Stripped = string:strip(SoapAction, both, $"), % soapUI sends "\"soapaction\""
+            Req:ok([{"Content-Type", "text/xml"}], lists:concat(["<xml>",Stripped,"</xml>"]))
+    catch
+        throw: {required_parameter_missing, "Soapaction"} ->
+            ErrMsg = "Header Missing - SOAPAction",
+            Req:respond(400, ErrMsg);
+        _ : _ ->
+            % log this
+            Req:respond(500, "Internal Error")
+    end;
     
 post(_Path, Req) ->
     Req:respond(404, "Not Found\r\n").
