@@ -28,7 +28,7 @@
 
       <s:complexType name="MmynResponse">
         <s:sequence>
-          <s:element minOccurs="1" maxOccurs="1" name="status" type="s:integer" />
+          <s:element minOccurs="1" maxOccurs="1" name="status" type="s:int" />
           <s:element minOccurs="1" maxOccurs="1" name="detail" type="s:string" />
         </s:sequence>
       </s:complexType>

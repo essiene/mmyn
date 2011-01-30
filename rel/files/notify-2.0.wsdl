@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://www.mmyn.org/mmyn" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" targetNamespace="http://www.mmyn.org/mmyn" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
-  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Web services for the Mmyn SMPP Gateway Server</wsdl:documentation>
+  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Notify request for the Mmyn SMPP Gateway Server</wsdl:documentation>
   <wsdl:types>
       <s:schema elementFormDefault="qualified" targetNamespace="http://www.mmyn.org/mmyn">
       <s:complexType name="MmynHeader">
@@ -17,15 +17,16 @@
 
           <s:element minOccurs="1" maxOccurs="1" name="msisdn" type="s:string" />
           <s:element minOccurs="1" maxOccurs="1" name="message" type="s:string" />
-         <s:element minOccurs="1" maxOccurs="1" name="ttl" type="s:integer" />
+         <s:element minOccurs="1" maxOccurs="1" name="max-ttl" type="s:int" />
          </s:sequence>
       </s:complexType>
 
       <s:complexType name="NotifyResponse">
         <s:sequence>
-          <s:element minOccurs="1" maxOccurs="1" name="status" type="s:integer" />
+          <s:element minOccurs="1" maxOccurs="1" name="status" type="s:int" />
           <s:element minOccurs="1" maxOccurs="1" name="detail" type="s:string" />
-          <s:element minOccurs="1" maxOccurs="1" name="ttl" type="s:integer" />
+          <s:element minOccurs="1" maxOccurs="1" name="wait-for-reply" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="ttl" type="s:int" />
 
         </s:sequence>
       </s:complexType>
@@ -63,7 +64,7 @@
   </wsdl:message>
   <wsdl:portType name="NotifySoap">
     <wsdl:operation name="Notify" parameterOrder="parameters">
-      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Send an SMS. This is not tied to any Notification</wsdl:documentation>
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Notify the server of a new incoming SMS</wsdl:documentation>
       <wsdl:input message="tns:NotifySoapIn" />
       <wsdl:output message="tns:NotifySoapOut" />
     </wsdl:operation>
@@ -82,7 +83,7 @@
     </wsdl:operation>
   </wsdl:binding>
   <wsdl:service name="Notify">
-    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Mmayen SMPP Gateway SOAP Services v2.0</wsdl:documentation>
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Notify Request v2.0</wsdl:documentation>
     <wsdl:port name="NotifySoap" binding="tns:NotifySoapBinding">
         <soap:address location="http://localhost:11581/soap/2.0/notify" />
     </wsdl:port>
