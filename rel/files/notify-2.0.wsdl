@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://www.mmyn.org/mmyn" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" targetNamespace="http://www.mmyn.org/mmyn" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Web services for the Mmyn SMPP Gateway Server</wsdl:documentation>
+  <wsdl:types>
+      <s:schema elementFormDefault="qualified" targetNamespace="http://www.mmyn.org/mmyn">
+      <s:complexType name="MmynHeader">
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="System" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TransactionID" type="s:string" />
+          </s:sequence>
+      </s:complexType>
+      <s:complexType name="NotifyRequest">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="id" type="s:string" />
+           <s:element minOccurs="1" maxOccurs="1" name="shortcode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="keyword" type="s:string" />
+
+          <s:element minOccurs="1" maxOccurs="1" name="msisdn" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="message" type="s:string" />
+         <s:element minOccurs="1" maxOccurs="1" name="ttl" type="s:integer" />
+         </s:sequence>
+      </s:complexType>
+
+      <s:complexType name="NotifyResponse">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="status" type="s:integer" />
+          <s:element minOccurs="1" maxOccurs="1" name="detail" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ttl" type="s:integer" />
+
+        </s:sequence>
+      </s:complexType>
+
+      <s:element name="Header">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="fields" type="tns:MmynHeader" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+
+      <s:element name="Notify">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="fields" type="tns:NotifyRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="fields" type="tns:NotifyResponse" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="NotifySoapIn">
+    <wsdl:part name="request_header" element="tns:Header" />
+    <wsdl:part name="parameters" element="tns:Notify" />
+  </wsdl:message>
+  <wsdl:message name="NotifySoapOut">
+    <wsdl:part name="parameters" element="tns:Response" />
+  </wsdl:message>
+  <wsdl:portType name="NotifySoap">
+    <wsdl:operation name="Notify" parameterOrder="parameters">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Send an SMS. This is not tied to any Notification</wsdl:documentation>
+      <wsdl:input message="tns:NotifySoapIn" />
+      <wsdl:output message="tns:NotifySoapOut" />
+    </wsdl:operation>
+ </wsdl:portType>
+  <wsdl:binding name="NotifySoapBinding" type="tns:NotifySoap">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="Notify">
+        <soap:operation soapAction="notify" style="document" />
+      <wsdl:input>
+        <soap:header message="tns:NotifySoapIn" part="request_header" use="literal" />
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Notify">
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Mmayen SMPP Gateway SOAP Services v2.0</wsdl:documentation>
+    <wsdl:port name="NotifySoap" binding="tns:NotifySoapBinding">
+        <soap:address location="http://localhost:11581/soap/2.0" />
+    </wsdl:port>
+ </wsdl:service>
+</wsdl:definitions>
