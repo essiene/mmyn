@@ -84,7 +84,7 @@
   <wsdl:service name="Notify">
     <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Mmayen SMPP Gateway SOAP Services v2.0</wsdl:documentation>
     <wsdl:port name="NotifySoap" binding="tns:NotifySoapBinding">
-        <soap:address location="http://localhost:11581/soap/2.0" />
+        <soap:address location="http://localhost:11581/soap/2.0/notify" />
     </wsdl:port>
  </wsdl:service>
 </wsdl:definitions>
