@@ -58,6 +58,17 @@ handle_http(Req) ->
     Resource = Req:resource([lowercase, urldecode]),
     mmyn_misultin:Method3(Resource, Req).
 
+get(["soap", "2.0", "notify"], Req) ->
+    QueryString = Req:parse_qs(),
+
+    case proplists:is_defined("wsdl", QueryString) of
+        true -> 
+            Req:file("var/www/notify-2.0.wsdl");
+        false -> 
+            Req:ok([{"Content-Type", "text/plain"}], 
+                     "Server: Mmayen SMPP Gateway\r\nRelease: 1.0\r\nWeb Services Version: 2.0\r\nNotify Request: 2.0\r\n")
+    end;
+
 get(["soap", "2.0"], Req) ->
     QueryString = Req:parse_qs(),
 
