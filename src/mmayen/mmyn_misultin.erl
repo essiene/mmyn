@@ -116,23 +116,12 @@ post(["sendsms"], Req) ->
     Xml1 = lists:flatten(Xml0),
     Req:ok([{"Content-Type", "text/xml"}], Xml1);
 
+post(["soap", "2.0", "notify"], Req) ->
+    dispatch_soap_req(Req, notify);
+ 
 post(["soap", "2.0"], Req) ->
-    Headers = Req:get(headers),
-    Body = Req:get(body),
-    try get_value("Soapaction", Headers) of
-        SoapAction ->
-            Stripped = string:strip(SoapAction, both, $"), % soapUI sends "\"soapaction\""
-            {_, Xml, ResCode} = mmyn_soapsrv:dispatch(mmyn, Body, Stripped),
-            Req:respond(ResCode, [{"Content-Type", "text/xml"}], Xml)
-    catch
-        throw: {required_parameter_missing, "Soapaction"} ->
-            ErrMsg = "Header Missing - SOAPAction",
-            Req:respond(400, ErrMsg);
-        _ : _ ->
-            % log this
-            Req:respond(500, "Internal Error")
-    end;
-    
+    dispatch_soap_req(Req, mmyn);
+   
 post(_Path, Req) ->
     Req:respond(404, "Not Found\r\n").
 
@@ -157,3 +146,21 @@ deliver_msg(QueryString) ->
     Msg = get_value("msg", QueryString),
     ok = sms:send(Src, Dst, Msg, mmyn_misultin),
     ok.
+
+dispatch_soap_req(Req, EndpointName) ->
+    Headers = Req:get(headers),
+    Body = Req:get(body),
+    try get_value("Soapaction", Headers) of
+        SoapAction ->
+            Stripped = string:strip(SoapAction, both, $"), % soapUI sends  requotes the Soapaction header like so: "\"soapaction\""
+            {_, Xml, ResCode} = mmyn_soapsrv:dispatch(EndpointName, Body, Stripped),
+            Req:respond(ResCode, [{"Content-Type", "text/xml"}], Xml)
+    catch
+        throw: {required_parameter_missing, "Soapaction"} ->
+            ErrMsg = "Header Missing - SOAPAction",
+            Req:respond(400, ErrMsg);
+        _ : _ ->
+            % log this
+            Req:respond(500, "Internal Error")
+    end.
+ 
