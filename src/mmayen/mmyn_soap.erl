@@ -35,4 +35,4 @@ handler(SoapAction, _, _) ->
     {error, list:concat(["SOAPAction not supported: ", SoapAction])}.
 
 notify(SoapAction, _, _) ->
-    {error, list:concat(["Not yet implemented: ", SoapAction])}.
+    {error, lists:concat(["Not yet implemented: ", SoapAction])}.
