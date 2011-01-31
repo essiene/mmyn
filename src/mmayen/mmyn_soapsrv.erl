@@ -27,6 +27,9 @@
 
 -define(SERVER, ?MODULE).
 
+-record(soap_endpoint, {name, mf, wsdl}). % name = atom(), mf = {Module, Function},
+                                          % wsdl = #wsdl{}
+
 %% State
 -record(s, {
           wsdl_list = []  % list of {Id, WsdlModel} tuples, where Id == {M,F}
