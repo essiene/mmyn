@@ -32,7 +32,7 @@ handler("reply", _, [#'mmyn:Reply'{fields=Request}]) ->
     {ok, Response};
 
 handler(SoapAction, _, _) ->
-    {error, list:concat(["SOAPAction not supported: ", SoapAction])}.
+    {error, lists:concat(["SOAPAction not supported: ", SoapAction])}.
 
 notify(SoapAction, _, _) ->
     {error, lists:concat(["Not yet implemented: ", SoapAction])}.
