@@ -50,7 +50,8 @@ code_change(_OldVsn, St, _Extra) ->
 % deny() = [iolist()]
 % destaddr() = iolist()
 % keywords() = [iolist()]
-% handler() = iolist() | {atom(), atom()}
+% handler() = iolist() | {protocol(), iolist()} | {atom(), atom()}
+% protocol() = rest | soap
 %
 % And example is shown below
 %
@@ -64,7 +65,7 @@ code_change(_OldVsn, St, _Extra) ->
 %       ["07062022125", "MTNN"], 
 %       "33923", 
 %       ["reg", "bar"], 
-%       "http://foo.bar/service" 
+%       {soap, "http://foo.bar/service"}
 %   }
 % ]
 
