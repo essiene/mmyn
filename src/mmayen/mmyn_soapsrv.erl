@@ -202,24 +202,24 @@ dispatch(State, Name, SoapAction, Req) ->
 
 
 %%% Analyse the result and produce some output
-result(Model, {ok, ResHeader, ResBody, ResCode, SessVal}) ->
-    return(Model, ResHeader, ResBody, ResCode, SessVal, undefined);
+result(Model, {ok, ResBody}) ->
+    return(Model, undefined, ResBody, ?OK_CODE, undefined);
 result(Model, {ok, ResHeader, ResBody}) ->
-    return(Model, ResHeader, ResBody, ?OK_CODE, undefined, undefined);
+    return(Model, ResHeader, ResBody, ?OK_CODE, undefined);
 result(Model, {ok, ResHeader, ResBody, Files}) ->
-    return(Model, ResHeader, ResBody, ?OK_CODE, undefined, Files);
-result(_Model, {error, client, ClientMssg}) ->
+    return(Model, ResHeader, ResBody, ?OK_CODE, Files);
+result(_Model, {error, ClientMssg}) ->
     cli_error(ClientMssg);
 result(_Model, false) ->   % soap notify !
     false;
 result(_Model, Error) ->
     srv_error(f("Error processing message: ~p", [Error])).
 
-return(#wsdl{model = Model}, ResHeader, ResBody, ResCode, SessVal, Files) ->
-    return(Model, ResHeader, ResBody, ResCode, SessVal, Files);
-return(Model, ResHeader, ResBody, ResCode, SessVal, Files) when not is_list(ResBody) ->
-    return(Model, ResHeader, [ResBody], ResCode, SessVal, Files);
-return(Model, ResHeader, ResBody, ResCode, SessVal, Files) ->
+return(#wsdl{model = Model}, ResHeader, ResBody, ResCode, Files) ->
+    return(Model, ResHeader, ResBody, ResCode, Files);
+return(Model, ResHeader, ResBody, ResCode, Files) when not is_list(ResBody) ->
+    return(Model, ResHeader, [ResBody], ResCode, Files);
+return(Model, ResHeader, ResBody, ResCode, Files) ->
     %% add envelope
     Header2 = case ResHeader of
                   undefined -> undefined;
@@ -231,10 +231,10 @@ return(Model, ResHeader, ResBody, ResCode, SessVal, Files) ->
         {ok, XmlDoc} ->
 	    case Files of
 		undefined ->
-		    {ok, XmlDoc, ResCode, SessVal};
+		    {ok, XmlDoc, ResCode};
 		_ ->
 		    DIME = detergent_dime:encode(XmlDoc, Files),
-		    {ok, DIME, ResCode, SessVal}
+		    {ok, DIME, ResCode}
 	    end;
         {error, WriteError} ->
             srv_error(f("Error writing XML: ~p", [WriteError]));
