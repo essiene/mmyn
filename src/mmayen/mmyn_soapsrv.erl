@@ -16,7 +16,7 @@
 
 %% API
 -export([start_link/0, start_link/1,
-         setup/1, setup/2, setup/3
+         setup/1, setup/3, setup/4
         ]).
 
 %% gen_server callbacks
@@ -32,7 +32,7 @@
 
 %% State
 -record(s, {
-          soap_endpoints = []
+          endpoint_list = []
          }).
 
 -define(OK_CODE, 200).
@@ -65,14 +65,14 @@ start_link(L) ->
 setup(_ConfigFile) ->
     tbd.
 
-setup(Id, WsdlFile) when is_tuple(Id),size(Id)==2 ->
+setup(Name, MF, WsdlFile) when is_tuple(MF),size(MF)==2 ->
     Wsdl = detergent:initModel(WsdlFile),
-    gen_server:call(?SERVER, {add_wsdl, Id, Wsdl}, infinity).
+    gen_server:call(?SERVER, {add_endpoint, Name, MF, Wsdl}, infinity).
 
 
-setup(Id, WsdlFile, Prefix) when is_tuple(Id),size(Id)==2 ->
+setup(Name, MF, WsdlFile, Prefix) when is_tuple(MF),size(MF)==2 ->
     Wsdl = detergent:initModel(WsdlFile, Prefix),
-    gen_server:call(?SERVER, {add_wsdl, Id, Wsdl}, infinity).
+    gen_server:call(?SERVER, {add_endpoint, Name, MF, Wsdl}, infinity).
 
 
 
@@ -109,9 +109,10 @@ setup_on_init( {Id, WsdlFile, Prefix}, OldList ) when is_tuple(Id),size(Id)==2 -
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call({add_wsdl, Id, WsdlModel}, _From, State) ->
-    NewSoapEndpointList = uinsert({Id, WsdlModel}, State#s.soap_endpoints),
-    {reply, ok, State#s{soap_endpoints = NewSoapEndpointList}};
+handle_call({add_endpoint, Name, MF, WsdlModel}, _From, State) ->
+    Endpoint = #soap_endpoint{name=Name, mf=MF, wsdl=WsdlModel},
+    NewEndpointList = uinsert(Endpoint, State#s.endpoint_list),
+    {reply, ok, State#s{endpoint_list = NewEndpointList}};
 %%
 handle_call( {request, Id, Payload, SessionValue, SoapAction}, _From, State) ->
     Reply = request(State, Id, Payload, SessionValue, SoapAction),
