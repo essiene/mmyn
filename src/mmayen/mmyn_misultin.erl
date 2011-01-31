@@ -23,6 +23,8 @@ init([]) ->
 	process_flag(trap_exit, true),
 	misultin:start_link([{loop, fun handle_http/1}, {ip, Ip}, {port, Port}, {backlog, Backlog}]),
 	erlang:monitor(process, misultin),
+    mmyn_soapsrv:setup(mmyn, {mmyn_soap, handler}, "var/www/mmyn-2.0.wsdl", "mmyn"),
+    mmyn_soapsrv:setup(notify, {mmyn_soap, notify}, "var/www/notify-2.0.wsdl", "mmyn"),
     error_logger:info_msg("Webservice started~n"),
 	{ok, nil}.
 
