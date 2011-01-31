@@ -95,11 +95,16 @@ init([]) ->
                                             {rxworker,stop}, {undefined, undefined}]},
         permanent, 5000, worker, [rxwkr_nanny]},
 
-    Webservice = {mmyn_misultin,
+    SoapServer = {mmyn_soapsrv,
+        {mmyn_soapsrv, start_link, []},
+        permanent, 5000, worker, [mmyn_soapsrv]},
+
+    WebServer = {mmyn_misultin,
         {mmyn_misultin, start_link, []},
         permanent, 5000, worker, [mmyn_misultin]},
 
     Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, 
-        RxQ, RTable, RxSup, RxNanny, RxWkrSup, RxWkrNanny, Webservice],
+        RxQ, RTable, RxSup, RxNanny, RxWkrSup, RxWkrNanny, 
+        SoapServer, WebServer],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.
