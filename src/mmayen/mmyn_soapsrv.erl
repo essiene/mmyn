@@ -32,7 +32,7 @@
 
 %% State
 -record(s, {
-          wsdl_list = []  % list of {Id, WsdlModel} tuples, where Id == {M,F}
+          soap_endpoints = []
          }).
 
 -define(OK_CODE, 200).
@@ -88,10 +88,10 @@ setup(Id, WsdlFile, Prefix) when is_tuple(Id),size(Id)==2 ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init(L) -> %% [ {{Mod,Handler}, WsdlFile} ]
-	WsdlList = lists:foldl( fun( SoapSrvMod, OldList) -> 
+	SoapEndpointList = lists:foldl( fun( SoapSrvMod, OldList) -> 
 									setup_on_init( SoapSrvMod, OldList ) 
 							end,[],L),
-    {ok, #s{wsdl_list = WsdlList}}.
+    {ok, #s{soap_endpoints = SoapEndpointList}}.
 
 setup_on_init( {Id, WsdlFile}, OldList ) when is_tuple(Id),size(Id)==2 ->
 	Wsdl = detergent:initModel(WsdlFile),
@@ -110,8 +110,8 @@ setup_on_init( {Id, WsdlFile, Prefix}, OldList ) when is_tuple(Id),size(Id)==2 -
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call({add_wsdl, Id, WsdlModel}, _From, State) ->
-    NewWsdlList = uinsert({Id, WsdlModel}, State#s.wsdl_list),
-    {reply, ok, State#s{wsdl_list = NewWsdlList}};
+    NewSoapEndpointList = uinsert({Id, WsdlModel}, State#s.soap_endpoints),
+    {reply, ok, State#s{soap_endpoints = NewSoapEndpointList}};
 %%
 handle_call( {request, Id, Payload, SessionValue, SoapAction}, _From, State) ->
     Reply = request(State, Id, Payload, SessionValue, SoapAction),
@@ -246,7 +246,7 @@ srv_error(Error) ->
 
 
 get_model(State, Id) ->
-    case lists:keysearch(Id, 1, State#s.wsdl_list) of
+    case lists:keysearch(Id, 1, State#s.soap_endpoints) of
         {value, {_, Model}} -> {ok, Model};
         _                   -> {error, "model not found"}
     end.
