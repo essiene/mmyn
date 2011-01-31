@@ -59,7 +59,7 @@ start_link(L) ->
                                    [?MODULE, Emsg]),
             {error, Emsg};
         {module, erlsom} ->
-            gen_server:start_link({local, ?SERVER}, ?MODULE, L, [])
+            gen_server:start_link({local, ?SERVER}, ?MODULE, [L], [])
     end.
 
 setup(Name, MF, WsdlFile) when is_tuple(MF),size(MF)==2 ->
@@ -87,7 +87,7 @@ dispatch(Name, SoapAction, Req) ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init(L) -> %% [ {{Mod,Handler}, WsdlFile} ]
+init([L]) -> %% [ {Name, {Mod,Handler}, WsdlFile} ]
 	EndpointList = lists:foldl( fun( SoapSrvMod, OldList) -> 
 									setup_on_init( SoapSrvMod, OldList ) 
 							end,[],L),
