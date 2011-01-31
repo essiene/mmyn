@@ -93,12 +93,14 @@ init(L) -> %% [ {{Mod,Handler}, WsdlFile} ]
 							end,[],L),
     {ok, #s{soap_endpoints = SoapEndpointList}}.
 
-setup_on_init( {Id, WsdlFile}, OldList ) when is_tuple(Id),size(Id)==2 ->
+setup_on_init( {Name, MF, WsdlFile}, OldList ) when is_tuple(MF),size(MF)==2 ->
 	Wsdl = detergent:initModel(WsdlFile),
-	uinsert({Id, Wsdl}, OldList);
-setup_on_init( {Id, WsdlFile, Prefix}, OldList ) when is_tuple(Id),size(Id)==2 ->
+    Endpoint = #soap_endpoint{name=Name, mf=MF, wsdl=Wsdl},
+	uinsert(Endpoint, OldList);
+setup_on_init( {Name, MF, WsdlFile, Prefix}, OldList ) when is_tuple(MF),size(MF)==2 ->
 	Wsdl = detergent:initModel(WsdlFile, Prefix),
-	uinsert({Id, Wsdl}, OldList).
+    Endpoint = #soap_endpoint{name=Name, mf=MF, wsdl=Wsdl},
+	uinsert(Endpoint, OldList).
 	
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
