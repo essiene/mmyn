@@ -118,10 +118,12 @@ post(["sendsms"], Req) ->
 
 post(["soap", "2.0"], Req) ->
     Headers = Req:get(headers),
+    Body = Req:get(body),
     try get_value("Soapaction", Headers) of
         SoapAction ->
             Stripped = string:strip(SoapAction, both, $"), % soapUI sends "\"soapaction\""
-            Req:ok([{"Content-Type", "text/xml"}], lists:concat(["<xml>",Stripped,"</xml>"]))
+            {_, Xml, ResCode} = mmyn_soapsrv:dispatch(mmyn, Body, Stripped),
+            Req:respond(ResCode, [{"Content-Type", "text/xml"}], Xml)
     catch
         throw: {required_parameter_missing, "Soapaction"} ->
             ErrMsg = "Header Missing - SOAPAction",
