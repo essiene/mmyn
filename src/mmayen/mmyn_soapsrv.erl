@@ -96,6 +96,7 @@ init(L) -> %% [ {{Mod,Handler}, WsdlFile} ]
 setup_on_init( {Name, MF, WsdlFile}, OldList ) when is_tuple(MF),size(MF)==2 ->
 	Wsdl = detergent:initModel(WsdlFile),
     Endpoint = #soap_endpoint{name=Name, mf=MF, wsdl=Wsdl},
+    error_logger:info_msg("Added new soap endpoint: ~p~n", [Endpoint]),
 	uinsert(Endpoint, OldList);
 setup_on_init( {Name, MF, WsdlFile, Prefix}, OldList ) when is_tuple(MF),size(MF)==2 ->
 	Wsdl = detergent:initModel(WsdlFile, Prefix),
