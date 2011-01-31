@@ -16,7 +16,8 @@
 
 %% API
 -export([start_link/0, start_link/1,
-         setup/1, setup/3, setup/4
+         setup/1, setup/3, setup/4,
+         dispatch/3
         ]).
 
 %% gen_server callbacks
@@ -74,6 +75,9 @@ setup(Name, MF, WsdlFile, Prefix) when is_tuple(MF),size(MF)==2 ->
     Wsdl = detergent:initModel(WsdlFile, Prefix),
     gen_server:call(?SERVER, {add_endpoint, Name, MF, Wsdl}, infinity).
 
+dispatch(Name, SoapAction, Req) ->
+    gen_server:call(?SERVER, {dispatch, Name, SoapAction, Req}).
+
 
 
 %%====================================================================
@@ -111,6 +115,10 @@ setup_on_init( {Name, MF, WsdlFile, Prefix}, OldList ) when is_tuple(MF),size(MF
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
+handle_call({dispatch, Name, SoapAction, Req}, _From, State) ->
+    Reply = dispatch(State, Name, Req, SoapAction),
+    {reply, Reply, State};
+
 handle_call({add_endpoint, Name, MF, WsdlModel}, _From, State) ->
     Endpoint = #soap_endpoint{name=Name, mf=MF, wsdl=WsdlModel},
     NewEndpointList = uinsert(Endpoint, State#s.endpoint_list),
@@ -158,6 +166,25 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+
+dispatch(State, Name, SoapAction, Req) ->
+    %%error_logger:info_report([?MODULE, {payload, Req}]),
+    case get_endpoint(State, Name) of
+        {error, endpoint_not_found} ->
+            srv_error(io_lib:format("Endpoint Not Found: ~p", [Name]));
+        {ok, #soap_endpoint{mf={M, F}, wsdl=Wsdl}} ->
+
+            Umsg = (catch erlsom_lib:toUnicode(Req)),
+            case catch detergent:parseMessage(Umsg, Wsdl) of
+                {ok, Header, Body} -> 
+                    %% call function
+                    result(Wsdl, catch apply(M, F, [SoapAction, Header, Body]));
+                {error, Error} ->
+                    cli_error(Error);
+                OtherError -> 
+                    srv_error(io_lib:format("Error parsing message: ~p", [OtherError]))
+            end
+    end.
 
 request(State, {M,F} = Id, {Req, Attachments}, SessionValue, Action) ->
     {ok, Model} = get_model(State, Id),
@@ -252,6 +279,12 @@ get_model(State, Id) ->
     case lists:keysearch(Id, 1, State#s.endpoint_list) of
         {value, {_, Model}} -> {ok, Model};
         _                   -> {error, "model not found"}
+    end.
+
+get_endpoint(State, Name) ->
+    case lists:keysearch(Name, 2, State#s.endpoint_list) of
+        {value, EndPoint} -> {ok, EndPoint};
+        _                   -> {error, endpoint_not_found}
     end.
 
 uinsert({K,_} = E, [{K,_}|T]) -> [E|T];
