@@ -166,7 +166,7 @@ dispatch(State, Name, SoapAction, {Req, Attachments}) ->
     %%error_logger:info_report([?MODULE, {payload, Req}]),
     case get_endpoint(State, Name) of
         {error, endpoint_not_found} ->
-            srv_error(io_lib:format("Endpoint Not Found: ~p", [Name]));
+            srv_error(f("Endpoint Not Found: ~p", [Name]));
         {ok, #soap_endpoint{mf={M, F}, wsdl=Wsdl}} ->
 
             Umsg = (catch erlsom_lib:toUnicode(Req)),
@@ -177,7 +177,7 @@ dispatch(State, Name, SoapAction, {Req, Attachments}) ->
                 {error, Error} ->
                     cli_error(Error);
                 OtherError -> 
-                    srv_error(io_lib:format("Error parsing message: ~p", [OtherError]))
+                    srv_error(f("Error parsing message: ~p", [OtherError]))
             end
     end;
 
@@ -185,7 +185,7 @@ dispatch(State, Name, SoapAction, Req) ->
     %%error_logger:info_report([?MODULE, {payload, Req}]),
     case get_endpoint(State, Name) of
         {error, endpoint_not_found} ->
-            srv_error(io_lib:format("Endpoint Not Found: ~p", [Name]));
+            srv_error(f("Endpoint Not Found: ~p", [Name]));
         {ok, #soap_endpoint{mf={M, F}, wsdl=Wsdl}} ->
 
             Umsg = (catch erlsom_lib:toUnicode(Req)),
@@ -196,7 +196,7 @@ dispatch(State, Name, SoapAction, Req) ->
                 {error, Error} ->
                     cli_error(Error);
                 OtherError -> 
-                    srv_error(io_lib:format("Error parsing message: ~p", [OtherError]))
+                    srv_error(f("Error parsing message: ~p", [OtherError]))
             end
     end.
 
@@ -213,7 +213,7 @@ result(_Model, {error, client, ClientMssg}) ->
 result(_Model, false) ->   % soap notify !
     false;
 result(_Model, Error) ->
-    srv_error(io_lib:format("Error processing message: ~p", [Error])).
+    srv_error(f("Error processing message: ~p", [Error])).
 
 return(#wsdl{model = Model}, ResHeader, ResBody, ResCode, SessVal, Files) ->
     return(Model, ResHeader, ResBody, ResCode, SessVal, Files);
@@ -249,13 +249,13 @@ f(S,A) -> lists:flatten(io_lib:format(S,A)).
 cli_error(Error) -> 
     error_logger:error_msg("~p(~p): Cli Error: ~p~n", 
                            [?MODULE, ?LINE, Error]),
-    Fault = detergent:makeFault("Client", "Client error"),
+    Fault = detergent:makeFault("Client", f("~p", [Error])),
     {error, Fault, ?BAD_MESSAGE_CODE}.
 
 srv_error(Error) -> 
     error_logger:error_msg("~p(~p): Srv Error: ~p~n", 
                            [?MODULE, ?LINE, Error]),
-    Fault = detergent:makeFault("Server", "Server error"),
+    Fault = detergent:makeFault("Server", f("~p", [Error])),
     {error, Fault, ?SERVER_ERROR_CODE}.
 
 
