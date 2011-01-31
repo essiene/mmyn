@@ -16,7 +16,7 @@
 
 %% API
 -export([start_link/0, start_link/1,
-         setup/1, setup/3, setup/4,
+         setup/3, setup/4,
          dispatch/3
         ]).
 
@@ -61,10 +61,6 @@ start_link(L) ->
         {module, erlsom} ->
             gen_server:start_link({local, ?SERVER}, ?MODULE, L, [])
     end.
-
-%% Setup a SOAP interface according to the config file.
-setup(_ConfigFile) ->
-    tbd.
 
 setup(Name, MF, WsdlFile) when is_tuple(MF),size(MF)==2 ->
     Wsdl = detergent:initModel(WsdlFile),
@@ -124,9 +120,8 @@ handle_call({add_endpoint, Name, MF, WsdlModel}, _From, State) ->
     NewEndpointList = uinsert(Endpoint, State#s.endpoint_list),
     {reply, ok, State#s{endpoint_list = NewEndpointList}};
 %%
-handle_call( {request, Id, Payload, SessionValue, SoapAction}, _From, State) ->
-    Reply = request(State, Id, Payload, SessionValue, SoapAction),
-    {reply, Reply, State}.
+handle_call(R, _From, State) ->
+    {reply, {error, R}, State}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -167,6 +162,25 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 
+dispatch(State, Name, SoapAction, {Req, Attachments}) ->
+    %%error_logger:info_report([?MODULE, {payload, Req}]),
+    case get_endpoint(State, Name) of
+        {error, endpoint_not_found} ->
+            srv_error(io_lib:format("Endpoint Not Found: ~p", [Name]));
+        {ok, #soap_endpoint{mf={M, F}, wsdl=Wsdl}} ->
+
+            Umsg = (catch erlsom_lib:toUnicode(Req)),
+            case catch detergent:parseMessage(Umsg, Wsdl) of
+                {ok, Header, Body} -> 
+                    %% call function
+                    result(Wsdl, catch apply(M, F, [SoapAction, Header, Body, Attachments]));
+                {error, Error} ->
+                    cli_error(Error);
+                OtherError -> 
+                    srv_error(io_lib:format("Error parsing message: ~p", [OtherError]))
+            end
+    end;
+
 dispatch(State, Name, SoapAction, Req) ->
     %%error_logger:info_report([?MODULE, {payload, Req}]),
     case get_endpoint(State, Name) of
@@ -186,34 +200,6 @@ dispatch(State, Name, SoapAction, Req) ->
             end
     end.
 
-request(State, {M,F} = Id, {Req, Attachments}, SessionValue, Action) ->
-    {ok, Model} = get_model(State, Id),
-    %%error_logger:info_report([?MODULE, {payload, Req}]),
-    case catch detergent:parseMessage(Req, Model) of
-        {ok, Header, Body} -> 
-            %% call function
-            result(Model, catch apply(M, F, [Header, Body, 
-                                             Action, SessionValue,
-					     Attachments]));
-        {error, Error} ->
-            cli_error(Error);
-        OtherError -> 
-            srv_error(io_lib:format("Error parsing message: ~p", [OtherError]))
-    end;
-request(State, {M,F} = Id, Req, SessionValue, Action) ->
-    %%error_logger:info_report([?MODULE, {payload, Req}]),
-    {ok, Model} = get_model(State, Id),
-    Umsg = (catch erlsom_lib:toUnicode(Req)),
-    case catch detergent:parseMessage(Umsg, Model) of
-        {ok, Header, Body} -> 
-            %% call function
-            result(Model, catch apply(M, F, [Header, Body, 
-                                             Action, SessionValue]));
-        {error, Error} ->
-            cli_error(Error);
-        OtherError -> 
-            srv_error(io_lib:format("Error parsing message: ~p", [OtherError]))
-    end.
 
 %%% Analyse the result and produce some output
 result(Model, {ok, ResHeader, ResBody, ResCode, SessVal}) ->
@@ -272,14 +258,6 @@ srv_error(Error) ->
     Fault = detergent:makeFault("Server", "Server error"),
     {error, Fault, ?SERVER_ERROR_CODE}.
 
-
-
-
-get_model(State, Id) ->
-    case lists:keysearch(Id, 1, State#s.endpoint_list) of
-        {value, {_, Model}} -> {ok, Model};
-        _                   -> {error, "model not found"}
-    end.
 
 get_endpoint(State, Name) ->
     case lists:keysearch(Name, 2, State#s.endpoint_list) of
