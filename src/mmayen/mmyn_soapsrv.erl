@@ -88,10 +88,10 @@ setup(Name, MF, WsdlFile, Prefix) when is_tuple(MF),size(MF)==2 ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init(L) -> %% [ {{Mod,Handler}, WsdlFile} ]
-	SoapEndpointList = lists:foldl( fun( SoapSrvMod, OldList) -> 
+	EndpointList = lists:foldl( fun( SoapSrvMod, OldList) -> 
 									setup_on_init( SoapSrvMod, OldList ) 
 							end,[],L),
-    {ok, #s{soap_endpoints = SoapEndpointList}}.
+    {ok, #s{endpoint_list = EndpointList}}.
 
 setup_on_init( {Name, MF, WsdlFile}, OldList ) when is_tuple(MF),size(MF)==2 ->
 	Wsdl = detergent:initModel(WsdlFile),
@@ -249,7 +249,7 @@ srv_error(Error) ->
 
 
 get_model(State, Id) ->
-    case lists:keysearch(Id, 1, State#s.soap_endpoints) of
+    case lists:keysearch(Id, 1, State#s.endpoint_list) of
         {value, {_, Model}} -> {ok, Model};
         _                   -> {error, "model not found"}
     end.
