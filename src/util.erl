@@ -1,6 +1,6 @@
 -module(util).
 -export([soap_request/5, esmerx_params/0, esmetx_params/0, routing_params/0, 
-        sms_format_msg/2, notify_params/0, replace/3]).
+        sms_format_msg/2, notify_params/0, replace/3, rxworker_params/0]).
 
 -include("mmyn.hrl").
 
