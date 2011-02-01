@@ -11,7 +11,7 @@
         terminate/2,
         code_change/3]).
 
--export([start_link/1, start/1, stop/1, wake/1, check_and_send/1]).
+-export([start_link/1, stop/1, wake/1, check_and_send/1]).
 
 -define(BK_OFF_MAX, 360000).
 -define(BK_OFF_MIN, 100).
@@ -29,9 +29,6 @@ start_link(Id) ->
     end,
     gen_esme34:start_link(?MODULE, [Id], [{logger, {esme_logger, [esmetx, Id]}},
             {ignore_version, IgnoreVersion}]).
-
-start(Id) ->
-    gen_esme34:start(?MODULE, [Id], []).
 
 stop(Pid) ->
     gen_esme34:cast(Pid, stop).
