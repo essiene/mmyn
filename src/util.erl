@@ -41,6 +41,10 @@ esmetx_params() ->
     {ok, Password} = application:get_env(esmetx_smsc_password), 
     {Host, Port, SystemId, Password}.
 
+rxworker_params() -> 
+    {ok, BatchSize} = application:get_env(rxworker_batch_size), 
+    {BatchSize}.
+
 notify_params() -> 
     {ok, Msisdns} = application:get_env(notify_msisdns), 
     {ok, Sender} = application:get_env(notify_sender), 

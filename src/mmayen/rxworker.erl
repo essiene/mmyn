@@ -12,7 +12,7 @@
 
 -export([start_link/1, stop/1, ping/1]).
 
--record(st, {id, notify_msisdns, notify_sender, async_ref, rxq_ref}).
+-record(st, {id, notify_msisdns, notify_sender, async_ref, rxq_ref, batch_size}).
 
 
 start_link(Id) ->
@@ -26,8 +26,9 @@ ping(Pid) ->
 
 init([Id]) ->
     {NotifyMsisdns, NotifySender} = util:notify_params(),
+    {BatchSize} = util:rxworker_params(),
     erlang:send_after(5000, self(), timeout),
-    {ok, #st{id=Id, notify_msisdns=NotifyMsisdns, notify_sender=NotifySender}}.
+    {ok, #st{id=Id, notify_msisdns=NotifyMsisdns, notify_sender=NotifySender, batch_size=BatchSize}}.
 
 
 handle_call(ping, _, #st{id=Id}=St) ->
@@ -40,14 +41,14 @@ handle_cast(stop, St) ->
 handle_cast(_Req, St) ->
     {noreply, St}.
 
-handle_info({Ref, rxq_data, DataList}, #st{id=Id, async_ref=Ref}=St) ->
-    {ok, NewRef} = rxq:async_pop(1,Id),
+handle_info({Ref, rxq_data, DataList}, #st{id=Id, async_ref=Ref, batch_size=BatchSize}=St) ->
+    {ok, NewRef} = rxq:async_pop(BatchSize,Id),
     process_req(St, DataList),
     {noreply, St#st{async_ref=NewRef}};
 
-handle_info(timeout, #st{id=Id}=St) ->
+handle_info(timeout, #st{id=Id, batch_size=BatchSize}=St) ->
     RxqRef = erlang:monitor(process, rxq),
-    {ok, Ref} = rxq:async_pop(1,Id),
+    {ok, Ref} = rxq:async_pop(BatchSize,Id),
     {noreply, St#st{async_ref=Ref, rxq_ref=RxqRef}};
 
 handle_info({'DOWN', RxqRef, _, _, _}, #st{rxq_ref=RxqRef}=St) ->
