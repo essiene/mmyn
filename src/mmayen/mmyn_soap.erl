@@ -1,6 +1,7 @@
 -module(mmyn_soap).
--include("mmyn_soap.hrl").
 -include("mmyn.hrl").
+-include("mmyn_soap.hrl").
+-include("notify_soap.hrl").
 -export([handler/3, notify/3]).
 
 
@@ -34,5 +35,21 @@ handler("reply", _, [#'mmyn:Reply'{fields=Request}]) ->
 handler(SoapAction, _, _) ->
     {error, lists:concat(["SOAPAction not supported: ", SoapAction])}.
 
+notify("notify", _, [#'mmyn:Notify'{fields=Request}]) ->
+    #'mmyn:NotifyRequest'{id=_Id, shortcode=_Sc, keyword=_Kw, 
+        msisdn=_Msisdn, message=_Message, 'max-ttl'=Ttl} = Request,
+
+    Response = #'mmyn:Response'{
+        fields=#'mmyn:NotifyResponse' {
+            ttl=Ttl div 5,
+            'wait-for-reply' = false,
+            status = 0,
+            detail = "Accepted for processing"
+        }
+    },
+
+    {ok, Response};
+
 notify(SoapAction, _, _) ->
-    {error, lists:concat(["Not yet implemented: ", SoapAction])}.
+    {error, lists:concat(["SOAPAction not supported: ", SoapAction])}.
+
