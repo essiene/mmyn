@@ -187,10 +187,10 @@ process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
         {ok, {soap, Url}, RouteData} -> 
             Handler = lists:concat(["soap+", Url]),
             log_req(St, Req, Handler),
-            dispatch_req(St, Qid, RouteData, {soap_handler, get, [Url]});
+            dispatch_req(St, Qid, RouteData, {notify, call, Url});
         {ok, {rest, Url}, RouteData} -> 
             log_req(St, Req, Url),
-            dispatch_req(St, Qid, RouteData, {http_handler, get, [Url]});
+            dispatch_req(St, Qid, RouteData, {http_handler, get, Url});
         {ok, {Module, Function}, RouteData} -> 
             Handler = io_lib:format("erlang://~s/~s", [Module, Function]),
             log_req(St, Req, Handler),
