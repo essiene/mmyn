@@ -43,13 +43,18 @@ handle_tx(_, _, St) ->
 
 
 handle_rx(#pdu{sequence_number=Snum}=Pdu, 
-          #st{id=Id, host=H, port=P, system_id=Sid}=St) ->
-
-    {ok, Qid} = rxq:push(#rxq_req{rxid=Id, pdu=Pdu, 
-                          host=H, port=P, system_id=Sid}),
-    DeliverSmResp = #deliver_sm_resp{},
-    {tx, {?ESME_ROK, Snum, DeliverSmResp, Qid}, St};
-    
+          #st{id=Id, host=H, port=P, system_id=Sid}=St) -> 
+          
+          try rxq:push(#rxq_req{rxid=Id, pdu=Pdu, 
+                      host=H, port=P, system_id=Sid}) of
+              {ok, Qid} -> 
+                  DeliverSmResp = #deliver_sm_resp{}, 
+                  {tx, {?ESME_ROK, Snum, DeliverSmResp, Qid}, St}
+          catch 
+              Type:Err ->
+                  error_logger:error_msg("RXQ:PUSH/1 -> ~p:~p~n", [Type,Err]),
+                  {tx, {?ESME_RX_T_APPN, Snum, #deliver_sm_resp{}, undefined}, St}
+          end;
 
 handle_rx(_, St) ->
     {noreply, St}.
