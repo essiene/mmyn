@@ -102,8 +102,8 @@ get(["send"], Req) ->
         throw: {required_parameter_missing, Key} ->
             ErrMsg = lists:concat(["1 : Required parameter missing - '", Key, "'"]),
             Req:respond(400, ErrMsg);
-        _ : _ ->
-            % log this
+        Type : Msg ->
+            error_logger:error_msg("/SEND: ~p:~p~n", [Type, Msg]),
             Req:respond(500, "Internal Error")
     end;
 
@@ -159,8 +159,8 @@ dispatch_soap_req(Req, EndpointName) ->
         throw: {required_parameter_missing, "Soapaction"} ->
             ErrMsg = "Header Missing - SOAPAction",
             Req:respond(400, ErrMsg);
-        _ : _ ->
-            % log this
+        Type : Msg ->
+            error_logger:error_msg("SOAP: ~p:~p~n", [Type, Msg]),
             Req:respond(500, "Internal Error")
     end.
  
