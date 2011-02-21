@@ -49,20 +49,14 @@ init([WsdlFile]) ->
     {ok, #st_notify{wsdl=Wsdl}}.
 
 
-handle_call({notify, Url, H, R}, _From, #st_notify{wsdl=Wsdl}=St) ->
-    Reply = case detergent:call({Wsdl, Url}, "Notify", [H], [R]) of
-        {error, Reason} ->
-            {noreply, {error, {notify, 500, Reason}}};
-        {ok, _Headers, [#'soap:Fault'{faultstring=Reason}]} ->
-            {noreply, {error, {notify, 501, Reason}}};
-        {ok, _Headers, [#'mmyn:Response'{fields=#'mmyn:NotifyResponse'{
-                        status=0, detail=Detail}}]} ->
-            {noreply, {ok, {notify, 0, Detail}}};
-        {ok, _Headers, [#'mmyn:Response'{fields=#'mmyn:NotifyResponse'{
-                        status=N, detail=Detail}}]} ->
-            {noreply, {error, {notify, N, Detail}}}
-    end,
-    {reply, Reply, St};
+handle_call({notify, Url, H, R}, _From, St) ->
+    CallOpts = #call_opts{url=Url},
+    notify(St, H, R, CallOpts);
+
+handle_call({notify, Url, H, R, User, Pass}, _From, St) ->
+    CallOpts = #call_opts{url=Url, 
+                          http_client_options=[{basic_auth, {User, Pass}}]},
+    notify(St, H, R, CallOpts);
 
 handle_call(R, _, St) ->
     {reply, {error, R}, St}.
