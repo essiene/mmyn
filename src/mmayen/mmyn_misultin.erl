@@ -96,8 +96,8 @@ get(["send"], Req) ->
     QueryString = Req:parse_qs(),
 
     try deliver_msg(QueryString) of
-        ok ->
-            Req:ok([{"Content-Type", "text/plain"}], "0 : Accepted for delivery\r\n")
+        {Code, Message} ->
+            Req:ok([{"Content-Type", "text/plain"}], lists:concat([Code,":","Accepted for delivery\r\n"]))
     catch
         throw: {required_parameter_missing, Key} ->
             ErrMsg = lists:concat(["1 : Required parameter missing - '", Key, "'"]),
@@ -144,8 +144,7 @@ deliver_msg(QueryString) ->
     Src = get_value("from", QueryString),
     Dst = get_value("to", QueryString),
     Msg = get_value("msg", QueryString),
-    ok = sms:send(Src, Dst, Msg, mmyn_misultin),
-    ok.
+    sms:send(Src, Dst, Msg, mmyn_misultin).
 
 dispatch_soap_req(Req, EndpointName) ->
     Headers = Req:get(headers),
