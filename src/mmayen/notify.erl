@@ -17,26 +17,16 @@ start_link(WsdlFile) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [WsdlFile], []).
 
 
+call({Url, User, Pass}, Tid, From, To, Keywords, Msg) ->
+    H = make_header(Tid),
+    R = make_body(Tid, To, Keywords, From, Msg),
+    gen_server:call(?MODULE, {notify, Url, H, R, User, Pass});
+
 call(Url, Tid, From, To, Keywords, Msg) ->
-    H = #'mmyn:Header' {
-        fields = #'mmyn:MmynHeader' {
-            'System' = "mmyn",
-            'TransactionID' = Tid
-        }
-    },
-
-    R = #'mmyn:Notify' {
-        fields = #'mmyn:NotifyRequest' {
-            id = Tid,
-            shortcode = To,
-            keyword = string:join(Keywords, " "),
-            msisdn = From,
-            message = string:join(Msg, " "),
-            'max-ttl' = 3000
-        }
-    },
-
+    H = make_header(Tid),
+    R = make_body(Tid, To, Keywords, From, Msg),
     gen_server:call(?MODULE, {notify, Url, H, R}).
+
 
 
 
