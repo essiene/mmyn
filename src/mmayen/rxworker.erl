@@ -185,6 +185,10 @@ process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
         {error, route_denied} ->
             log_req(St, Req, route_denied),
             log_status(Qid, error);
+        {ok, {soap, {Url, _, _}=Addr}, RouteData} -> 
+            Handler = lists:concat(["soap+", Url]),
+            log_req(St, Req, Handler),
+            dispatch_req(St, Qid, RouteData, {notify, call, Addr});
         {ok, {soap, Url}, RouteData} -> 
             Handler = lists:concat(["soap+", Url]),
             log_req(St, Req, Handler),
@@ -203,6 +207,7 @@ process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
 
 dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw, 
         msg=Msg}, CallbackSpec) ->
+    % try catch, log and return "service temp unavailable mesg"
     case callback(CallbackSpec, Qid, F, To, Kw, Msg) of
         {noreply, Status} -> 
             log_status(Qid, Status), 
