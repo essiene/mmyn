@@ -97,7 +97,7 @@ get(["send"], Req) ->
 
     try deliver_msg(QueryString) of
         {Code, Message} ->
-            Req:ok([{"Content-Type", "text/plain"}], lists:concat([Code,":","Accepted for delivery\r\n"]))
+            Req:ok([{"Content-Type", "text/plain"}], lists:concat([Code,":",Message,"\r\n"]))
     catch
         throw: {required_parameter_missing, Key} ->
             ErrMsg = lists:concat(["1 : Required parameter missing - '", Key, "'"]),
