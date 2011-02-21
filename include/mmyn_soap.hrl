@@ -14,8 +14,3 @@
 -record('mmyn:SendSms', {anyAttribs, 'fields'}).
 -record('mmyn:SendSmsRequest', {anyAttribs, 'sender', 'msisdn', 'message'}).
 -record('mmyn:SendSmsResponse', {anyAttribs, 'fields'}).
--record('soap:Body', {anyAttribs, choice}).
--record('soap:Envelope', {anyAttribs, 'Header', 'Body', choice}).
--record('soap:Fault', {anyAttribs, 'faultcode', 'faultstring', 'faultactor', 'detail'}).
--record('soap:Header', {anyAttribs, choice}).
--record('soap:detail', {anyAttribs, choice}).
