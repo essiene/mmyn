@@ -79,3 +79,40 @@ terminate(_,_) ->
 
 code_change(_OldVsn, St, _Extra) ->
     {ok, St}.
+
+notify(#st_notify{wsdl=Wsdl}=St, Headers, Body, CallOpts) ->
+    Reply = case detergent:call(Wsdl, "Notify", [Headers], [Body], CallOpts) of
+        {error, Reason} ->
+            {noreply, {error, {notify, 500, Reason}}};
+        {ok, _Headers, [#'soap:Fault'{faultstring=Reason}]} ->
+            {noreply, {error, {notify, 501, Reason}}};
+        {ok, _Headers, [#'mmyn:Response'{fields=#'mmyn:NotifyResponse'{
+                        status=0, detail=Detail}}]} ->
+            {noreply, {ok, {notify, 0, Detail}}};
+        {ok, _Headers, [#'mmyn:Response'{fields=#'mmyn:NotifyResponse'{
+                        status=N, detail=Detail}}]} ->
+            {noreply, {error, {notify, N, Detail}}}
+    end,
+    {reply, Reply, St}.
+
+make_header(Tid) ->
+    #'mmyn:Header' {
+        fields = #'mmyn:MmynHeader' {
+            'System' = "mmyn",
+            'TransactionID' = Tid
+        }
+    }.
+
+make_body(Tid, To, Keywords, From, Msg) ->
+    #'mmyn:Notify' {
+        fields = #'mmyn:NotifyRequest' {
+            id = Tid,
+            shortcode = To,
+            keyword = string:join(Keywords, " "),
+            msisdn = From,
+            message = string:join(Msg, " "),
+            'max-ttl' = 3000
+        }
+    }.
+
+
