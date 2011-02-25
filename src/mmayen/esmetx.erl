@@ -41,15 +41,11 @@ check_and_send(Pid) ->
 
 init([Id]) ->
     {Host, Port, SystemId, Password} = util:esmetx_params(),
-    {ok, {Min, Max, Delta}} = application:get_env(esmetx_backoff),
-	Mfa = {?MODULE, check_and_send, [self()]},
-	Backoff = {Min, Max, Delta, Mfa},
-    ok = backoff:register(Min, Max, Delta, Mfa),
 
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
-            #st{host=Host, port=Port, system_id=SystemId, password=Password,
-                id=Id, esmetx_backoff=Backoff, awake=false}}.
+            #st{host=Host, port=Port, system_id=SystemId, 
+                password=Password, id=Id}}.
 
 handle_tx({Status, StatusDetail}, {#txq_req{t1=T1}=QItem, DqTime}, #st{id=Id}=St) ->
 	Qtime = time_diff(DqTime, T1),
@@ -72,19 +68,15 @@ handle_cast(wake, #st{awake=true}=St) ->
     {noreply, St};
 
 handle_cast(stop, #st{}=St) ->
-    backoff:deregister(),
     {stop, normal, St#st{awake=false}};
 
-handle_cast(check_and_send, #st{esmetx_backoff={Min,Max,Delta,Mfa}}=St) ->
+handle_cast(check_and_send, #st{}=St) ->
     case txq:pop() of 
         '$empty' ->
-            ok = backoff:increment(Min,Max,Delta,Mfa),
             {noreply, St#st{awake=false}};
         #txq_req{src=Src, dst=Dest, message=Msg}=QItem ->
 			DqTime = now(),
 			gen_esme34:transmit_pdu(self(), #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}, {QItem, DqTime}),
-
-            ok = backoff:regular(Min,Max,Delta,Mfa),
             {noreply, St#st{awake=true}}
     end;
 
