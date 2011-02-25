@@ -5,3 +5,8 @@ Whenever we make a gen_server:call, we have to properly respond if timeouts occu
 Basically, handle this condition so the VM stays up, but we reject the requests,
 also make the timeouts to gen_server:call's configurable, so we can increase
 the vm timeout window.
+
+The following activities need to be made asynchronous:
+    - Pushing into a queue
+    - Calling an external URL
+    - Writing to files/logs
