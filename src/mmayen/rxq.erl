@@ -85,7 +85,6 @@ handle_call({async_pop_req, W, S, T}, _F, #st{async_rx=AsyncRx0}=St) ->
     R = make_ref(),
     Rq = #async_req{sender=S, window_sz=W, ref=R, t1=T},
     AsyncRx1 = queue:in(Rq, AsyncRx0),
-    erlang:send_after(500, self(), async_pop),
     {reply, {ok, R}, St#st{async_rx=AsyncRx1}};
 
 handle_call({pop, Caller, Time}, _F, #st{q=Q}=St) ->
@@ -113,9 +112,7 @@ handle_info(async_pop, #st{async_rx=ARx0, q=Q}=St) ->
         {noitem, ARx1} ->
             {2000, ARx1};
         {noreq, ARx1} ->
-            {2000, ARx1};
-        {ok, ARx1} ->
-            {500, ARx1}
+            {2000, ARx1}
     end,
     erlang:send_after(Time, self(), async_pop),
     {noreply, St#st{async_rx=ARx}};
@@ -158,7 +155,7 @@ handle_async_pop(AsyncQ, Spq) ->
                             Items = spq:pop(Spq, W),
                             log(Items, S, T1),
                             SPid ! {Ref, rxq_data, Items},
-                            {ok, AsyncQ1}
+                            handle_async_pop(AsyncQ1, Spq)
                     end
             end
     end.
