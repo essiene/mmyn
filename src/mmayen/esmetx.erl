@@ -18,7 +18,7 @@
 -define(BK_OFF_GROW, 1000).
 -define(TXQ_CHK, txq_chk).
 
--record(st, {host, port, system_id, password, id, esmetx_backoff, awake}).
+-record(st, {host, port, system_id, password, id, batch_sz}).
 
 start_link(Id) ->
     IgnoreVersion = case application:get_env(esme_ignore_version) of
@@ -40,12 +40,12 @@ check_and_send(Pid) ->
     gen_esme34:cast(Pid, check_and_send).
 
 init([Id]) ->
-    {Host, Port, SystemId, Password} = util:esmetx_params(),
+    {Host, Port, SystemId, Password, BatchSize} = util:esmetx_params(),
 
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
             #st{host=Host, port=Port, system_id=SystemId, 
-                password=Password, id=Id}}.
+                password=Password, id=Id, batch_sz=BatchSize}}.
 
 handle_tx({Status, StatusDetail}, {#txq_req{t1=T1}=QItem, DqTime}, #st{id=Id}=St) ->
 	Qtime = time_diff(DqTime, T1),
@@ -68,16 +68,16 @@ handle_cast(wake, #st{awake=true}=St) ->
     {noreply, St};
 
 handle_cast(stop, #st{}=St) ->
-    {stop, normal, St#st{awake=false}};
+    {stop, normal, St};
 
 handle_cast(check_and_send, #st{}=St) ->
     case txq:pop() of 
         '$empty' ->
-            {noreply, St#st{awake=false}};
+            {noreply, St#st{}};
         #txq_req{src=Src, dst=Dest, message=Msg}=QItem ->
 			DqTime = now(),
 			gen_esme34:transmit_pdu(self(), #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}, {QItem, DqTime}),
-            {noreply, St#st{awake=true}}
+            {noreply, St#st{}}
     end;
 
 handle_cast(_Req, St) ->

@@ -39,7 +39,8 @@ esmetx_params() ->
     {ok, Port} = application:get_env(esmetx_smsc_port), 
     {ok, SystemId} = application:get_env(esmetx_smsc_username), 
     {ok, Password} = application:get_env(esmetx_smsc_password), 
-    {Host, Port, SystemId, Password}.
+    {ok, BatchSize} = application:get_env(esmetx_batch_size),
+    {Host, Port, SystemId, Password, BatchSize}.
 
 rxworker_params() -> 
     {ok, BatchSize} = application:get_env(rxworker_batch_size), 
