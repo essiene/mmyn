@@ -36,7 +36,7 @@ check_and_send(Pid) ->
 
 init([Id]) ->
     {Host, Port, SystemId, Password} = util:esmetx_params(),
-    {BatchSize, PendingBatches} = util:esmetx_batch_params(),
+    {PendingBatches, BatchSize} = util:esmetx_batch_params(),
 
     init_batch_request(PendingBatches, BatchSize),
 
@@ -73,7 +73,8 @@ handle_cast(_Req, St) ->
     {noreply, St}.
 
 handle_info({_, qdata, Items}, #st{}=St) ->
-    transmit(Items);
+    transmit(St, Items),
+    {noreply, St};
 
 handle_info(_, St) ->
     {noreply, St}.

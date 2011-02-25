@@ -43,8 +43,8 @@ esmetx_params() ->
     {Host, Port, SystemId, Password}.
 
 esmetx_batch_params() ->
-    {ok, BatchSize} = application:get_env(esmetx_batch_size),
     {ok, PendingBatches} = application:get_env(esmetx_batch_pending),
+    {ok, BatchSize} = application:get_env(esmetx_batch_size),
     {PendingBatches, BatchSize}.
 
 rxworker_params() -> 
