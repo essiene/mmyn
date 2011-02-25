@@ -13,7 +13,7 @@
 
 -export([start_link/1, stop/1, wake/1, check_and_send/1]).
 
--record(st, {host, port, system_id, password, id, batch_sz}).
+-record(st, {host, port, system_id, password, id, batch_sz, batch_pending}).
 
 start_link(Id) ->
     IgnoreVersion = case application:get_env(esme_ignore_version) of
@@ -35,12 +35,16 @@ check_and_send(Pid) ->
     gen_esme34:cast(Pid, check_and_send).
 
 init([Id]) ->
-    {Host, Port, SystemId, Password, BatchSize} = util:esmetx_params(),
+    {Host, Port, SystemId, Password} = util:esmetx_params(),
+    {BatchSize, PendingBatches} = util:esmetx_batch_params(),
+
+    init_batch_request(PendingBatches, BatchSize),
 
     {ok, {Host, Port, 
             #bind_transmitter{system_id=SystemId, password=Password}}, 
             #st{host=Host, port=Port, system_id=SystemId, 
-                password=Password, id=Id, batch_sz=BatchSize}}.
+                password=Password, id=Id, batch_sz=BatchSize, 
+                batch_pending=PendingBatches}}.
 
 handle_tx({Status, StatusDetail}, {#txq_req{t1=T1}=QItem, DqTime}, #st{id=Id}=St) ->
 	Qtime = time_diff(DqTime, T1),
@@ -65,18 +69,11 @@ handle_cast(wake, #st{awake=true}=St) ->
 handle_cast(stop, #st{}=St) ->
     {stop, normal, St};
 
-handle_cast(check_and_send, #st{}=St) ->
-    case txq:pop() of 
-        '$empty' ->
-            {noreply, St#st{}};
-        #txq_req{src=Src, dst=Dest, message=Msg}=QItem ->
-			DqTime = now(),
-			gen_esme34:transmit_pdu(self(), #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}, {QItem, DqTime}),
-            {noreply, St#st{}}
-    end;
-
 handle_cast(_Req, St) ->
     {noreply, St}.
+
+handle_info({_, qdata, Items}, #st{}=St) ->
+    transmit(Items);
 
 handle_info(_, St) ->
     {noreply, St}.
@@ -91,3 +88,20 @@ code_change(_OldVsn, St, _Extra) ->
 time_diff(T2, T1) ->
 	Diff = timer:now_diff(T2, T1),
 	Diff/1000.
+
+transmit(#st{batch_sz=BatchSize}, []) ->
+    txq:apop(BatchSize);
+transmit(St, [QItem|Rest]) -> 
+    #txq_req{src=Src, dst=Dest, message=Msg}=QItem, 
+    DqTime = now(), 
+    gen_esme34:transmit_pdu(self(), #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}, {QItem, DqTime}), 
+    transmit(St, Rest).
+
+init_batch_request(PendingBatches, BatchSize) ->
+    init_batch_request(PendingBatches, BatchSize, 0).
+
+init_batch_request(Max, _, Max) ->
+    ok;
+init_batch_request(Max, BatchSize, C) ->
+    txq:apop(BatchSize),
+    init_batch_request(Max, BatchSize, C+1).

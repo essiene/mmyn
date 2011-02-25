@@ -1,6 +1,7 @@
 -module(util).
--export([soap_request/5, esmerx_params/0, esmetx_params/0, routing_params/0, 
-        sms_format_msg/2, notify_params/0, replace/3, rxworker_params/0]).
+-export([soap_request/5, esmerx_params/0, esmetx_params/0, 
+         routing_params/0, sms_format_msg/2, notify_params/0, 
+         replace/3, rxworker_params/0, esmetx_batch_params/0]).
 
 -include("mmyn.hrl").
 
@@ -39,8 +40,12 @@ esmetx_params() ->
     {ok, Port} = application:get_env(esmetx_smsc_port), 
     {ok, SystemId} = application:get_env(esmetx_smsc_username), 
     {ok, Password} = application:get_env(esmetx_smsc_password), 
+    {Host, Port, SystemId, Password}.
+
+esmetx_batch_params() ->
     {ok, BatchSize} = application:get_env(esmetx_batch_size),
-    {Host, Port, SystemId, Password, BatchSize}.
+    {ok, PendingBatches} = application:get_env(esmetx_batch_pending),
+    {PendingBatches, BatchSize}.
 
 rxworker_params() -> 
     {ok, BatchSize} = application:get_env(rxworker_batch_size), 
