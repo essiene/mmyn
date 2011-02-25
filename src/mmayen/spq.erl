@@ -39,6 +39,9 @@ pop(Ref) ->
 pop(Ref, Count) ->
     gen_server:call(Ref, {pop, Count}).
 
+apop(Ref, {Sender, Count}) ->
+    gen_server:call(Ref, {apop, Sender, Count});
+
 apop(Ref, Count) ->
     gen_server:call(Ref, {apop, self(), Count}).
 
