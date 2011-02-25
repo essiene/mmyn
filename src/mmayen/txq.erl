@@ -6,7 +6,7 @@
         handle_cast/2,handle_info/2,
         terminate/2,code_change/3]).
 
--export([start_link/0, push/1, pop/0, ping/0, log/6]).
+-export([start_link/0, push/1, apop/1, ping/0, log/6]).
 
 -record(st, {q}).
 
@@ -16,8 +16,8 @@ start_link() ->
 push(#txq_req{}=Item) ->
     gen_server:call(?MODULE, {push, Item}).
 
-pop() ->
-    gen_server:call(?MODULE, pop).
+apop(Count) ->
+    gen_server:call(?MODULE, {apop, self(), Count}).
 
 ping() ->
 	gen_server:call(?MODULE, ping).
@@ -31,7 +31,7 @@ init([]) ->
     Suffix = "log",
 
     AddAppender = fun () ->
-        case spq:open('.txq.q') of
+        case spq:open('.txq.q', 5000, 100) of
             {ok, Q} ->
                 case log4erl:add_file_appender(?LOGGER, file_logger_txqlog, {LogDir, LogFile, {size, LogSize}, NumRotations, Suffix, all, "%l%n"}) of
                     {ok, _} ->
@@ -61,13 +61,9 @@ handle_call({push, #txq_req{}=Item}, _F, #st{q=Q}=St) ->
     spq:push(Q, Item#txq_req{t1=now(), id=Qid}),
     {reply, {ok, Qid}, St};
 
-handle_call(pop, _F, #st{q=Q}=St) ->
-    case spq:pop(Q) of
-        {error, empty} -> 
-            {reply, '$empty', St};
-        {value, V} ->
-            {reply, V, St}
-    end;
+handle_call({apop, Sender, Count}, _F, #st{q=Q}=St) ->
+    Reply = spq:apop(Q, {Sender, Count}),
+    {reply, Reply, St};
 
 handle_call(ping, _F, #st{q=Q}=St) ->
 	Len = spq:len(Q),
