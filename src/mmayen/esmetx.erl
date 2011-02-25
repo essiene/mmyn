@@ -13,11 +13,6 @@
 
 -export([start_link/1, stop/1, wake/1, check_and_send/1]).
 
--define(BK_OFF_MAX, 360000).
--define(BK_OFF_MIN, 100).
--define(BK_OFF_GROW, 1000).
--define(TXQ_CHK, txq_chk).
-
 -record(st, {host, port, system_id, password, id, batch_sz}).
 
 start_link(Id) ->
