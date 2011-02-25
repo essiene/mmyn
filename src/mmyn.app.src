@@ -4,7 +4,8 @@
     {vsn, "1.0"}, 
     {registered, 
       [backoff, txq, tx_sup, tx_nanny, rx_sup, rx_nanny, mmyn_misultin, mmyn, tlog]}, 
-    {applications, [kernel, stdlib, sasl, ibrowse, log4erl, erlsom, misultin, smpp34pdu, smpp34]}, 
+    {applications, [kernel, stdlib, sasl, ibrowse, log4erl, erlsom, 
+                    misultin, smpp34pdu, smpp34, detergent, mmynlib]}, 
     {mod, {mmyn, []}},
     {env, []}
  ]
