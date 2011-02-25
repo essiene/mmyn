@@ -64,7 +64,7 @@ init([]) ->
     TxNanny = {tx_nanny,
         {nanny, start_link, [tx_nanny, {tx_nanny_num_children, tx_nanny_backoff}, 
                                         {tx_sup,start_child}, 
-                                        {esmetx,stop},{{esmetx,wake}, 1000}]},
+                                        {esmetx,stop},{undefined, undefined}]},
         permanent, 5000, worker, [tx_nanny]},
 
     Notify = {notify, 

@@ -28,7 +28,6 @@ send(Src, Xml, Module) ->
 
 send(Src, Dst, Msg, Module) ->
     txq:push(#txq_req{src=Src, dst=Dst, message=Msg, module=Module}),
-    nanny:wake_all(tx_nanny),
     {0, "Accepted for delivery"}.
 
 

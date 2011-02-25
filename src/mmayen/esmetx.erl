@@ -11,7 +11,7 @@
         terminate/2,
         code_change/3]).
 
--export([start_link/1, stop/1, wake/1, check_and_send/1]).
+-export([start_link/1, stop/1]).
 
 -record(st, {host, port, system_id, password, id, batch_sz, batch_pending}).
 
@@ -27,12 +27,6 @@ start_link(Id) ->
 
 stop(Pid) ->
     gen_esme34:cast(Pid, stop).
-
-wake(Pid) ->
-    gen_esme34:cast(Pid, wake).
-
-check_and_send(Pid) ->
-    gen_esme34:cast(Pid, check_and_send).
 
 init([Id]) ->
     {Host, Port, SystemId, Password} = util:esmetx_params(),
@@ -58,13 +52,6 @@ handle_rx(_, St) ->
     
 handle_call(Req, _From, St) ->
     {reply, {error, Req}, St}.
-
-handle_cast(wake, #st{awake=false, esmetx_backoff={Min,Max,Delta,Mfa}}=St) ->
-    ok = backoff:regular(Min, Max, Delta, Mfa),
-    {noreply, St#st{awake=true}};
-
-handle_cast(wake, #st{awake=true}=St) ->
-    {noreply, St};
 
 handle_cast(stop, #st{}=St) ->
     {stop, normal, St};
