@@ -209,7 +209,7 @@ dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw,
         msg=Msg}, CallbackSpec) ->
     % try catch, log and return "service temp unavailable mesg"
     case callback(CallbackSpec, Qid, F, To, Kw, Msg) of
-        {noreply, {error, Reason}} -> 
+        {noreply, {error, Reason}=Status} -> 
             error_logger:error_msg("RXWORKER: ~p~n", [Reason]),
             log_status(Qid, Status), 
             send(To, F, "Service is temporarily unavailable. Please try again later."),
