@@ -1,0 +1,47 @@
+mmyn is an SMPP Application Gateway.
+
+Initial support is on SMPP 3.4 only.
+
+Focus in on:
+    1. High system uptime: 
+       The system should be generally up. A system crash should be regarded 
+       as a major category 1 fault.
+
+    2. High connectivity longetivity: 
+       When we open a connection, it should generally stay up. Disconnecting 
+       and reconnecting though possible and supported should be regarded as 
+       a massive evil.
+
+    3. High transmit throughput per transmitter:
+       Each transmitter should be able to perform to close to 99% of its raw
+       abilities. As much as possible, the design of the system should impose
+       as little overhead on the raw capabilities of the channel.
+
+    4. Ease of scaling out transmitter:
+       With each transmitter performing at wicked levels, we should be able to
+       easily spin up more transmitters to have exponential wickedness in 
+       terms of throughput.
+
+    5. High receive throughput:
+       See item 3.
+
+    6. Ease of scaling out receiver 
+       See item 4.
+
+    7. Agressive Queing:
+       Rx and Tx should be backed by queues.
+
+    8. Queue TTL support:
+       Even though queues are employed, we should be able to set a Queue Time
+       To Live (TTL). This will allow the system to offer some sort of time
+       basic guarantees.
+
+    9. Application latency awareness:
+       When TTLs are employed, the application server should be aware of the
+       latencies and throughputs of each of the application servers used to
+       service Rx requests. These will affect how the TTL is applied to a
+       packet at dequeue time. This also helps us to give proper reports on
+       who is dragging us backwards.
+
+    10.TTL flexibility:
+       Points 8 and 9 above should be easily turned on and off
