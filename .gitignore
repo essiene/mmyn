@@ -12,5 +12,6 @@ erl_crash.dump
 *.zip
 *.rpm
 *.patch
-rel/mmyn
+rel/mmyn*
 ebin
+deps
