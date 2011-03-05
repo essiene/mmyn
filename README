@@ -1,4 +1,14 @@
-mmyn is an SMPP Application Gateway.
+Eka: Kokomma o,
+     Idiok eyenowong,
+     Akaka nso ke efere ekporoko?
+
+Kokomma: Nke be be,
+         Ukot atwak esio... Kpong!
+
+
+Introduction
+============
+Mmayen (shortened as Mmyn) is an SMPP Application Gateway.
 
 Initial support is on SMPP 3.4 only.
 
@@ -45,3 +55,27 @@ Focus in on:
 
     10.TTL flexibility:
        Points 8 and 9 above should be easily turned on and off
+
+Building
+========
+Mmayen is built with rebar. It is conveniently wrapped with a Makefile
+
+First obtain from github:
+
+    $ git clone http://github.com/essiene/mmyn.git
+
+Then run make
+
+    $ make
+
+The Makefile will fetch all the dependencies and then build Mmayen.
+
+
+Making A Release
+================
+
+To run Mmayen, you must make an OTP release:
+
+    $ make release
+
+The release will be located in $PWD/rel/mmyn
