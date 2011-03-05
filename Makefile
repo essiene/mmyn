@@ -1,9 +1,13 @@
-all:
+all: get-deps
 	./rebar compile
+
+get-deps: 
+	./rebar get-deps
+
 
 clean:
 	./rebar clean
 
 
-release:
-	./rebar clean compile generate
+release: clean all
+	./rebar generate
