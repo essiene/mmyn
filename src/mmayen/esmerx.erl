@@ -34,7 +34,7 @@ init([Id]) ->
     {Host, Port, SystemId, Password} = util:esmerx_params(),
 
     {ok, 
-        {Host, Port, #bind_receiver{system_id=SystemId, password=Password}}, 
+        {Host, Port, #pdu{body=#bind_receiver{system_id=SystemId, password=Password}}}, 
         #st{host=Host, port=Port, system_id=SystemId, password=Password, id=Id}
     }.
 
@@ -49,11 +49,17 @@ handle_rx(#pdu{sequence_number=Snum}=Pdu,
                       host=H, port=P, system_id=Sid}) of
               {ok, Qid} -> 
                   DeliverSmResp = #deliver_sm_resp{}, 
-                  {tx, {?ESME_ROK, Snum, DeliverSmResp, Qid}, St}
+                  Pdu = #pdu{command_status=?ESME_ROK,
+                             sequence_number=Snum,
+                             body=DeliverSmResp},
+                  {tx, {Pdu, Qid}, St}
           catch 
               Type:Err ->
                   error_logger:error_msg("RXQ:PUSH/1 -> ~p:~p~n", [Type,Err]),
-                  {tx, {?ESME_RX_T_APPN, Snum, #deliver_sm_resp{}, undefined}, St}
+                  Pdu = #pdu{command_status=?ESME_RX_T_APPN,
+                             sequence_number=Snum,
+                             body=#deliver_sm_resp{}},
+                  {tx, Pdu, St}
           end;
 
 handle_rx(_, St) ->

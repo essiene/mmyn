@@ -35,7 +35,7 @@ init([Id]) ->
     init_batch_request(PendingBatches, BatchSize),
 
     {ok, {Host, Port, 
-            #bind_transmitter{system_id=SystemId, password=Password}}, 
+            #pdu{body=#bind_transmitter{system_id=SystemId, password=Password}}}, 
             #st{host=Host, port=Port, system_id=SystemId, 
                 password=Password, id=Id, batch_sz=BatchSize, 
                 batch_pending=PendingBatches}}.
@@ -82,7 +82,10 @@ transmit(#st{batch_sz=BatchSize}, []) ->
 transmit(St, [QItem|Rest]) -> 
     #txq_req{src=Src, dst=Dest, message=Msg}=QItem, 
     DqTime = now(), 
-    gen_esme34:transmit_pdu(self(), #submit_sm{source_addr=Src, destination_addr=Dest, short_message=Msg}, {QItem, DqTime}), 
+    SubmitSm = #submit_sm{source_addr=Src, destination_addr=Dest,
+        short_message=Msg},
+    Pdu = #pdu{body=SubmitSm},
+    gen_esme34:transmit_pdu(self(), Pdu, {QItem, DqTime}), 
     transmit(St, Rest).
 
 init_batch_request(PendingBatches, BatchSize) ->
