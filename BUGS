@@ -1,6 +1,3 @@
-When a consumer to rxq:async_pop dies, cleanup its POP request, or
-the message inbox overflows and rxq stops responding
-
 Whenever we make a gen_server:call, we have to properly respond if timeouts occur.
 Basically, handle this condition so the VM stays up, but we reject the requests,
 also make the timeouts to gen_server:call's configurable, so we can increase
