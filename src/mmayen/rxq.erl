@@ -175,16 +175,17 @@ log([#rxq_req{}=H|T], Caller, RequestTime) ->
     log(T, Caller, RequestTime).
 
 
-log(#log{qid=Id, rwait=Rwt, caller=Caller, cwait=Cwt}) ->
+log(#log{qid=Id, rwait=Rwt, caller={Pid, Data}, cwait=Cwt}) ->
 
     Tstmp0 = calendar:now_to_local_time(now()),
     Tstmp = httpd_util:rfc1123_date(Tstmp0),
 
-    Log = case Caller of
-        {Pid, Data} ->
-            lists:flatten(io_lib:format("~s|~s|~.2f|~.2f|~w|~w", [Tstmp,Id,Rwt,Cwt,Pid,Data]));
-        Pid ->
-            lists:flatten(io_lib:format("~s|~s|~.2f|~.2f|~w|", [Tstmp,Id,Rwt,Cwt,Pid]))
-    end,
+    case catch(lists:flatten(io_lib:format("~s|~s|~.2f|~.2f|~w|~w", [Tstmp,Id,Rwt,Cwt,Pid,Data]))) of
+        {'EXIT', _} ->
+            ok;
+        Log -> 
+            log4erl:log(?LOGGER, debug, "~s", [Log])
+    end;
+log(#log{caller=Pid}) ->
+    log(#log{caller={Pid, ""}}).
 
-    ok = log4erl:log(?LOGGER, debug, "~s", [Log]).

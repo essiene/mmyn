@@ -96,5 +96,9 @@ log(#txq_req{id=Tid, src=Src, dst=Dst, message=Msg0, module=Mod}, TxId, Tq, Tsen
 
 	Msg = util:replace(Msg0, "\n", "+"),
 	Pid = self(),
-	Log = lists:flatten(io_lib:format("~s|~.2f|~.2f|~p|~p|~p|~s|~s|~s|~s|~p|~p", [Tstmp, Tq, Tsend, TxId, Pid, Mod, Tid, Src, Dst, Msg, Status, StatusDetail])),
-	ok = log4erl:log(?LOGGER, debug, "~s", [Log]).
+    case catch(lists:flatten(io_lib:format("~s|~.2f|~.2f|~p|~p|~p|~s|~s|~s|~s|~p|~p", [Tstmp, Tq, Tsend, TxId, Pid, Mod, Tid, Src, Dst, Msg, Status, StatusDetail]))) of
+        {'EXIT', _} ->
+            ok;
+        Log -> 
+            log4erl:log(?LOGGER, debug, "~s", [Log])
+    end.

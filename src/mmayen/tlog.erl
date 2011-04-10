@@ -124,7 +124,7 @@ to_string(#tlog{tid=Tid, rxid=Rxid, wid=Wid, wpid=WPid, smsc=Smsc, port=Port,
 	RqMsg = util:replace(RqMsg0, "\n", "+"),
 	RsMsg = util:replace(RsMsg0, "\n", "+"),
 
-    lists:flatten(io_lib:format("~s|~s|~.2f|~p|~p|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~p|~s|~b|~s|~p|~p", [Tid, DateTime, Rt, Wid, Rxid, 
+    catch(lists:flatten(io_lib:format("~s|~s|~.2f|~p|~p|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~s|~p|~s|~b|~s|~p|~p", [Tid, DateTime, Rt, Wid, Rxid, 
             RqSrc, RqDst, RqMsg, RsSrc, RsDst, RsMsg, Handler, Status, Op, Code, Detail, 
-            Extra, Smsc, Port, SystemId, Seqnum, WPid])).
+            Extra, Smsc, Port, SystemId, Seqnum, WPid]))).
 
