@@ -226,12 +226,12 @@ dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw,
             log_status(Qid, Status),
             send(To, F, "Service is temporarily unavailable. Please try again later."),
             notify(St, Status)
-        catch ->
-            Type:Msg ->
-                Status = {error, {dispatch_req, 500, Msg}},
-                log_status(Qid, Status),
-                send(To, F, "Service is temporarily unavailable. Please try again later."),
-                notify(St, Status)
+     catch 
+         _:Msg -> 
+             Status = {error, {dispatch_req, 500, Msg}}, 
+             log_status(Qid, Status), 
+             send(To, F, "Service is temporarily unavailable. Please try again later."), 
+             notify(St, Status)
     end.
 
 callback({M,F}, Tid, From, To, Kw, Msg) ->
