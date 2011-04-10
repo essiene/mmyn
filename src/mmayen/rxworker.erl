@@ -207,11 +207,11 @@ process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
 
 dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw, 
         msg=Msg}, CallbackSpec) ->
-    % try catch, log and return "service temp unavailable mesg"
-    case callback(CallbackSpec, Qid, F, To, Kw, Msg) of
+    try callback(CallbackSpec, Qid, F, To, Kw, Msg) of
         {noreply, {error, Reason}=Status} -> 
             error_logger:error_msg("RXWORKER: ~p~n", [Reason]),
             log_status(Qid, Status), 
+            % service is temporarily unavailable should be configured in config file
             send(To, F, "Service is temporarily unavailable. Please try again later."),
             notify(St, Status); 
         {noreply, Status} -> 
@@ -224,7 +224,14 @@ dispatch_req(St, Qid, #route_data{from=F, to=To, keywords=Kw,
         _ ->
             Status = {error, {dispatch_req, 500, "Callback returned invalid reply"}},
             log_status(Qid, Status),
+            send(To, F, "Service is temporarily unavailable. Please try again later."),
             notify(St, Status)
+        catch ->
+            Type:Msg ->
+                Status = {error, {dispatch_req, 500, Msg}},
+                log_status(Qid, Status),
+                send(To, F, "Service is temporarily unavailable. Please try again later."),
+                notify(St, Status)
     end.
 
 callback({M,F}, Tid, From, To, Kw, Msg) ->
