@@ -60,8 +60,8 @@ handle_cast(_Req, St) ->
     {noreply, St}.
 
 handle_info({_, qdata, Items}, #st{}=St) ->
-    transmit(St, Items),
-    {noreply, St};
+    PduList = build_pdu_list(St, Items),
+    {tx, PduList, St};
 
 handle_info(_, St) ->
     {noreply, St}.
@@ -77,16 +77,20 @@ time_diff(T2, T1) ->
 	Diff = timer:now_diff(T2, T1),
 	Diff/1000.
 
-transmit(#st{batch_sz=BatchSize}, []) ->
-    txq:apop(BatchSize);
-transmit(St, [QItem|Rest]) -> 
+build_pdu_list(St, Items) ->
+    build_pdu_list(St, Items, []).
+
+build_pdu_list(#st{batch_sz=BatchSize}, [], Accm) ->
+    txq:apop(BatchSize),
+    Accm;
+build_pdu_list(St, [QItem|Rest], Accm) -> 
     #txq_req{src=Src, dst=Dest, message=Msg}=QItem, 
     DqTime = now(), 
     SubmitSm = #submit_sm{source_addr=Src, destination_addr=Dest,
         short_message=Msg},
     Pdu = #pdu{body=SubmitSm},
-    gen_esme34:transmit_pdu(self(), Pdu, {QItem, DqTime}), 
-    transmit(St, Rest).
+    PduSpec = {Pdu, {QItem, DqTime}},
+    build_pdu_list(St, Rest, [PduSpec|Accm]).
 
 init_batch_request(PendingBatches, BatchSize) ->
     init_batch_request(PendingBatches, BatchSize, 0).
