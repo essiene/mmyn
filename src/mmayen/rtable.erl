@@ -75,6 +75,9 @@ route(#st_rtable{t=Tbl, sep=S}, #pdu{body=#deliver_sm{source_addr=From,
     SmsReq = #sms_req{from=preprocess(From), to=preprocess(To), msg=preprocess(Msg, S)},
     route(Tbl, SmsReq);
 
+route(_, #pdu{}) ->
+    {error, invalid_pdu_type};
+
 route(Tbl, #sms_req{}=SmsReq) ->
     case find_rule(Tbl, SmsReq) of
         {error, norule} ->
