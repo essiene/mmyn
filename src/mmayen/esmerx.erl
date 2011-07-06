@@ -42,24 +42,22 @@ handle_tx(_, _, St) ->
 	{noreply, St}. 
 
 
-handle_rx(#pdu{sequence_number=Snum}=Pdu, 
-          #st{id=Id, host=H, port=P, system_id=Sid}=St) -> 
+handle_rx(#pdu{body=#deliver_sm{}}=Pdu, #st{id=Id, host=H, port=P, system_id=Sid}=St) -> 
+
+          RespBody = #deliver_sm_resp{}, 
           
           try rxq:push(#rxq_req{rxid=Id, pdu=Pdu, 
                       host=H, port=P, system_id=Sid}) of
               {ok, Qid} -> 
-                  DeliverSmResp = #deliver_sm_resp{}, 
-                  Pdu = #pdu{command_status=?ESME_ROK,
-                             sequence_number=Snum,
-                             body=DeliverSmResp},
-                  {tx, {Pdu, Qid}, St}
+                  RespPdu = Pdu#pdu{command_status=?ESME_ROK,
+                             body=RespBody},
+                  {tx, {RespPdu, Qid}, St}
           catch 
               Type:Err ->
                   error_logger:error_msg("RXQ:PUSH/1 -> ~p:~p~n", [Type,Err]),
-                  Pdu = #pdu{command_status=?ESME_RX_T_APPN,
-                             sequence_number=Snum,
-                             body=#deliver_sm_resp{}},
-                  {tx, Pdu, St}
+                  RespPdu = Pdu#pdu{command_status=?ESME_RX_T_APPN,
+                             body=RespBody},
+                  {tx, RespPdu, St}
           end;
 
 handle_rx(_, St) ->
