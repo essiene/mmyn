@@ -59,8 +59,9 @@ handle_cast(stop, #st{}=St) ->
 handle_cast(_Req, St) ->
     {noreply, St}.
 
-handle_info({_, qdata, Items}, #st{}=St) ->
-    PduList = build_pdu_list(St, Items),
+handle_info({_, qdata, Items}, #st{batch_sz=BatchSize}=St) ->
+    PduList = [qitem2pduspec(X) || X <- Items],
+    txq:apop(BatchSize),
     {tx, PduList, St};
 
 handle_info(_, St) ->
@@ -77,21 +78,6 @@ time_diff(T2, T1) ->
 	Diff = timer:now_diff(T2, T1),
 	Diff/1000.
 
-build_pdu_list(St, Items) ->
-    build_pdu_list(St, Items, []).
-
-build_pdu_list(#st{batch_sz=BatchSize}, [], Accm) ->
-    txq:apop(BatchSize),
-    Accm;
-build_pdu_list(St, [QItem|Rest], Accm) -> 
-    #txq_req{src=Src, dst=Dest, message=Msg}=QItem, 
-    DqTime = now(), 
-    SubmitSm = #submit_sm{source_addr=Src, destination_addr=Dest,
-        short_message=Msg},
-    Pdu = #pdu{body=SubmitSm},
-    PduSpec = {Pdu, {QItem, DqTime}},
-    build_pdu_list(St, Rest, [PduSpec|Accm]).
-
 init_batch_request(PendingBatches, BatchSize) ->
     init_batch_request(PendingBatches, BatchSize, 0).
 
@@ -100,3 +86,7 @@ init_batch_request(Max, _, Max) ->
 init_batch_request(Max, BatchSize, C) ->
     txq:apop(BatchSize),
     init_batch_request(Max, BatchSize, C+1).
+
+qitem2pduspec(#txq_req{src=Src,dst=Dst,message=Msg}=QItem) ->
+    Pdu = #pdu{body=#submit_sm{source_addr=Src, destination_addr=Dst, short_message=Msg}},
+    {Pdu, {QItem, now()}}.
