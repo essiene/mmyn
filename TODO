@@ -23,3 +23,5 @@
   inside one vm instance.
 
 * Allow passing in a configurable interval for smpp34 enquire_link intervals
+
+* Make clean shoud probably check before removing artifacts

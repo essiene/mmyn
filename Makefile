@@ -9,6 +9,8 @@ get-deps:
 
 clean:
 	./rebar clean
+	rm -rf ./rel/mmyn-$(VERSION)
+	rm -rf mmyn-$(VERSION)
 
 
 release: clean all
