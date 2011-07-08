@@ -22,14 +22,14 @@ err_reply(_,Msisdn,Shortcode,_,_) ->
         {error, {test, 500, "Test generated error"}}
     }.
 
-vsn(_,Msisdn,_,_,_) ->
+vsn(_,Msisdn,To,_,_) ->
     Eng = "Mmayen",
     Release = "1",
     Os = os_type(),
     Reply = lists:concat(["Eng:", Eng, "\nRel:", Release, "\nOS:", Os]),
 
     {reply, 
-        {"mmyn", Msisdn, Reply}, 
+        {To, Msisdn, Reply}, 
         {ok, {vsn, 0}}
     }.
 
