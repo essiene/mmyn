@@ -28,8 +28,15 @@ send(Src, Xml, Module) ->
 
 send(Src, {Size, Csv}, Msg, Module) ->
     MsisdnList = string:tokens(Csv, ","),
-    spawn(?MODULE, send_multi, [MsisdnList, Size]),
-    {0, "Accepted multiple for delivery"};
+    case length(MsisdnList) of
+        N < Size ->
+            {412, "Supplied MSISDNs less than specified SIZE parameter"};
+        N > Size ->
+            {413, "Supplied MSISDNs greater than specified SIZE parameter"};
+        _ ->
+            spawn(?MODULE, send_multi, [Src, MsisdnList, Size, Msg, Module]),
+            {0, "Accepted multiple for delivery"}
+    end;
 send(Src, Dst, Msg, Module) ->
     txq:push(#txq_req{src=Src, dst=Dst, message=Msg, module=Module}),
     {0, "Accepted for delivery"}.
