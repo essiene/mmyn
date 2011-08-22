@@ -1,7 +1,7 @@
     -module(sms).
 -include("mmyn.hrl").
 
--export([send/3, send/4]).
+-export([send/3, send/4, send_multi/5]).
 
 -record(req, {status=55, sender, msisdn, message, flag}).
 
@@ -29,9 +29,9 @@ send(Src, Xml, Module) ->
 send(Src, {Size, Csv}, Msg, Module) ->
     MsisdnList = string:tokens(Csv, ","),
     case length(MsisdnList) of
-        N < Size ->
+        N when N < Size ->
             {412, "Supplied MSISDNs less than specified SIZE parameter"};
-        N > Size ->
+        N when N > Size ->
             {413, "Supplied MSISDNs greater than specified SIZE parameter"};
         _ ->
             spawn(?MODULE, send_multi, [Src, MsisdnList, Size, Msg, Module]),
