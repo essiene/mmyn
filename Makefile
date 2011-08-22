@@ -1,4 +1,4 @@
-VERSION=R1.1
+VERSION=R1.2
 
 all: get-deps
 	./rebar compile
