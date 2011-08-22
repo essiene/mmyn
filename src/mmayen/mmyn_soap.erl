@@ -9,13 +9,16 @@ handler("sendsms", _, [#'mmyn:SendSms'{fields=Request}]) ->
     #'mmyn:SendSmsRequest'{sender=Sender, msisdn=Msisdn, message=Message, size=Size}=Request,
 
     {Status, Detail} = case Size of 
+        % this must be the first clause as
+        % in erlang 'undefined' is greater than 1
+        % or rather atoms are greater than numbers
+        undefined ->
+            % set size to 1 when not sent by client
+            sms:send(Sender, {1, Msisdn}, Message, soap_sendsms);
         N when N < 1 ->
             {410, "Recipient list size less than 1"}; 
         N when N > 128 ->
             {411, "Recipient list size greater than maximum of 128"};
-        undefined ->
-            % set size to 1 when not sent by client
-            sms:send(Sender, {1, Msisdn}, Message, soap_sendsms);
         _ ->
             sms:send(Sender, {Size, Msisdn}, Message, soap_sendsms)
     end,
