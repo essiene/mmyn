@@ -6,9 +6,17 @@
 
 
 handler("sendsms", _, [#'mmyn:SendSms'{fields=Request}]) ->
-    #'mmyn:SendSmsRequest'{sender=Sender, msisdn=Msisdn, message=Message}=Request,
+    #'mmyn:SendSmsRequest'{sender=Sender, msisdn=Msisdn, message=Message, size=Size}=Request,
 
-    {Status, Detail} = sms:send(Sender, Msisdn, Message, soap_sendsms),
+    {Status, Detail} = case Size of 
+        N when N < 1 ->
+            {410, "Recipient list size less than 1"}; 
+        N when N > 128 ->
+            {411, "Recipient list size greater than maximum of 128"};
+        N when N =< 128 ->
+            sms:send(Sender, {Size, Msisdn}, Message, soap_sendsms)
+    end,
+
 
     Response = #'mmyn:SendSmsResponse'{
         fields=#'mmyn:MmynResponse'{
