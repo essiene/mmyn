@@ -122,7 +122,7 @@
     </wsdl:operation>
   </wsdl:binding>
   <wsdl:service name="MmynSmppGw">
-    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Mmayen SMPP Gateway SOAP Services v2.0</wsdl:documentation>
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Mmayen SMPP Gateway SOAP Services v2.0.1</wsdl:documentation>
     <wsdl:port name="MmynSmppGwSoap" binding="tns:MmynSmppGwSoapBinding">
         <soap:address location="http://localhost:11581/soap/2.0" />
     </wsdl:port>
