@@ -41,6 +41,12 @@ send(Src, Dst, Msg, Module) ->
     txq:push(#txq_req{src=Src, dst=Dst, message=Msg, module=Module}),
     {0, "Accepted for delivery"}.
 
+send_multi(_,_,0,_,_) ->
+    ok;
+send_multi(Src, [H|T], Size, Msg, Module) ->
+    send(Src, H, Msg, Module),
+    send_multi(Src, T, Size - 1, Msg, Module).
+
 
 parse(Xml) ->
     {ok, Response, _Tail} = erlsom:parse_sax(Xml, #req{}, fun process/2),
