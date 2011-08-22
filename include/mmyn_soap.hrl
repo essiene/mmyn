@@ -12,5 +12,5 @@
 -record('mmyn:ReplyRequest', {anyAttribs, 'id', 'sender', 'msisdn', 'message'}).
 -record('mmyn:ReplyResponse', {anyAttribs, 'fields'}).
 -record('mmyn:SendSms', {anyAttribs, 'fields'}).
--record('mmyn:SendSmsRequest', {anyAttribs, 'sender', 'msisdn', 'message'}).
+-record('mmyn:SendSmsRequest', {anyAttribs, 'sender', 'msisdn', 'message', 'size'=1}).
 -record('mmyn:SendSmsResponse', {anyAttribs, 'fields'}).
