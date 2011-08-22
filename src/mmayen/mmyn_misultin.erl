@@ -23,7 +23,7 @@ init([]) ->
 	process_flag(trap_exit, true),
 	misultin:start_link([{loop, fun handle_http/1}, {ip, Ip}, {port, Port}, {backlog, Backlog}]),
 	erlang:monitor(process, misultin),
-    mmyn_soapsrv:setup(mmyn, {mmyn_soap, handler}, "var/www/mmyn-2.0.wsdl", "mmyn"),
+    mmyn_soapsrv:setup(mmyn, {mmyn_soap, handler}, "var/www/mmyn-2.0.1.wsdl", "mmyn"),
     mmyn_soapsrv:setup(notify, {mmyn_soap, notify}, "var/www/notify-2.0.wsdl", "mmyn"),
     error_logger:info_msg("Webservice started~n"),
 	{ok, nil}.
@@ -68,7 +68,7 @@ get(["soap", "2.0", "notify"], Req) ->
             Req:file("var/www/notify-2.0.wsdl");
         false -> 
             Req:ok([{"Content-Type", "text/plain"}], 
-                     "Server: Mmayen SMPP Gateway\r\nRelease: 1.0\r\nWeb Services Version: 2.0\r\nNotify Request: 2.0\r\n")
+                     "Server: Mmayen SMPP Gateway\r\nRelease: 1.0\r\nWeb Services Version: 2.0.1\r\nNotify Request: 2.0\r\n")
     end;
 
 get(["soap", "2.0"], Req) ->
@@ -76,10 +76,10 @@ get(["soap", "2.0"], Req) ->
 
     case proplists:is_defined("wsdl", QueryString) of
         true -> 
-            Req:file("var/www/mmyn-2.0.wsdl");
+            Req:file("var/www/mmyn-2.0.1.wsdl");
         false -> 
             Req:ok([{"Content-Type", "text/plain"}], 
-                     "Server: Mmayen SMPP Gateway\r\nRelease: 1.0\r\nWeb Services Version: 2.0\r\n")
+                     "Server: Mmayen SMPP Gateway\r\nRelease: 1.0\r\nWeb Services Version: 2.0.1\r\n")
     end;
 
 get(["sendsms"], Req) ->
