@@ -26,6 +26,10 @@ send(Src, Xml, Module) ->
             #soap_response{status=505, message=Message}
     end.
 
+send(Src, {Size, Csv}, Msg, Module) ->
+    MsisdnList = string:tokens(Csv, ","),
+    spawn(?MODULE, send_multi, [MsisdnList, Size]),
+    {0, "Accepted multiple for delivery"};
 send(Src, Dst, Msg, Module) ->
     txq:push(#txq_req{src=Src, dst=Dst, message=Msg, module=Module}),
     {0, "Accepted for delivery"}.
