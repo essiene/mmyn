@@ -13,7 +13,10 @@ handler("sendsms", _, [#'mmyn:SendSms'{fields=Request}]) ->
             {410, "Recipient list size less than 1"}; 
         N when N > 128 ->
             {411, "Recipient list size greater than maximum of 128"};
-        N when N =< 128 ->
+        undefined ->
+            % set size to 1 when not sent by client
+            sms:send(Sender, {1, Msisdn}, Message, soap_sendsms);
+        _ ->
             sms:send(Sender, {Size, Msisdn}, Message, soap_sendsms)
     end,
 
