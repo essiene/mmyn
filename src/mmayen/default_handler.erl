@@ -1,5 +1,5 @@
 -module(default_handler).
--export([noreply/5, echo/5, hello/5, err_noreply/5, err_reply/5, vsn/5, msg/5]).
+-export([noreply/5, echo/5, hello/5, err_noreply/5, err_reply/5, vsn/5, msg/6]).
 -export([os_type/0, os_version/1]).
 
 
@@ -32,7 +32,7 @@ vsn(_,Msisdn,Scode,_,_) ->
     Reply = lists:concat(["Eng:", Eng, "\nRel:", Release, "\nOS:", Os]),
 
     {reply, 
-        {To, Msisdn, Reply}, 
+        {Scode, Msisdn, Reply}, 
         {ok, {vsn, 0}}
     }.
 
