@@ -1,5 +1,5 @@
 -module(default_handler).
--export([noreply/5, echo/5, hello/5, err_noreply/5, err_reply/5, vsn/5]).
+-export([noreply/5, echo/5, hello/5, err_noreply/5, err_reply/5, vsn/5, msg/5]).
 -export([os_type/0, os_version/1]).
 
 
@@ -11,6 +11,9 @@ echo(_Tid, Msisdn, Scode, _Keywords, Msg) ->
 
 hello(_Tid, Msisdn, Scode, _, _) ->
     {reply, {Scode, Msisdn, "Hello mmyn world!"}, {ok, {hello, 0}}}.
+
+msg({Sender, Message}, _Tid, Msisdn, _, _, _) ->
+    {reply, {Sender, Msisdn, Message}, {ok, {msg, 0}}}.
 
 
 err_noreply(_, _, _, _, _) ->
