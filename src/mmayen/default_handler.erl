@@ -6,23 +6,23 @@
 noreply(_, _, _, _, _) ->
     {noreply, ok}.
 
-echo(_Tid, From, To, _Keywords, Msg) ->
-    {reply, {To, From, string:join(Msg, " ")}, {ok, {echo, 0}}}.
+echo(_Tid, Msisdn, Scode, _Keywords, Msg) ->
+    {reply, {Scode, Msisdn, string:join(Msg, " ")}, {ok, {echo, 0}}}.
 
-hello(_Tid, From, To, _Keywords, _Msg) ->
-    {reply, {To, From, "Hello mmyn world!"}, {ok, {hello, 0}}}.
+hello(_Tid, Msisdn, Scode, _, _) ->
+    {reply, {Scode, Msisdn, "Hello mmyn world!"}, {ok, {hello, 0}}}.
 
 
 err_noreply(_, _, _, _, _) ->
     {noreply, {error, {test, 500, "Test generated error"}}}.
 
-err_reply(_,Msisdn,Shortcode,_,_) ->
+err_reply(_,Msisdn,Scode,_,_) ->
     {reply, 
-        {Shortcode, Msisdn, "Test generated error"},
+        {Scode, Msisdn, "Test generated error"},
         {error, {test, 500, "Test generated error"}}
     }.
 
-vsn(_,Msisdn,To,_,_) ->
+vsn(_,Msisdn,Scode,_,_) ->
     Eng = "Mmayen",
     Release = "1",
     Os = os_type(),
