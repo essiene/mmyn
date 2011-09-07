@@ -200,6 +200,10 @@ process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
             Handler = io_lib:format("erlang://~s/~s", [Module, Function]),
             log_req(St, Req, Handler),
             dispatch_req(St, Qid, RouteData, {Module, Function});
+        {ok, {Module, Function, Args}, RouteData} -> 
+            Handler = io_lib:format("erlang://~s/~s/~s", [Module, Function,Args]),
+            log_req(St, Req, Handler),
+            dispatch_req(St, Qid, RouteData, {Module, Function, Args});
         {ok, Url, RouteData} -> 
             log_req(St, Req, Url),
             dispatch_req(St, Qid, RouteData, {http_handler, get, [Url]})
