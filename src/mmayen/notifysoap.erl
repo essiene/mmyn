@@ -1,4 +1,4 @@
--module(notify).
+-module(notifysoap).
 -behaviour(gen_server).
 -include("mmyn_soap.hrl").
 -include("notify_soap.hrl").
