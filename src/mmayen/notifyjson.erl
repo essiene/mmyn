@@ -6,9 +6,10 @@
 
 
 
-call(UrlSpec, Tid, Msisdn, Shortcode, Keywords, Msg) ->
+call(UrlSpec, Tid, Msisdn, Shortcode, Keywords0, Msg) ->
+    Keywords1 = [list_to_binary(X) || X <- Keywords0],
     Notify = #'req.notify'{id=Tid, shortcode=list_to_integer(Shortcode), 
-        keywords=list_to_binlist(Keywords), msisdn=Msisdn, message=Msg},
+        keywords=Keywords1, msisdn=Msisdn, message=Msg},
     Msg = mmynapi:to_json(?MMYN_SYSTEM, Tid, Notify),
 
     case mmynapi:call(UrlSpec, Msg) of 
