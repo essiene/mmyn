@@ -207,9 +207,6 @@ process_req(St, #rxq_req{id=Qid, pdu=Pdu}=Req) ->
             Handler = io_lib:format("erlang://~s/~s", [Module, Function]),
             log_req(St, Req, Handler),
             dispatch_req(St, Qid, RouteData, {Module, Function, Args});
-        {ok, {Url,_,_}=Addr, RouteData} -> 
-            log_req(St, Req, Url),
-            dispatch_req(St, Qid, RouteData, {notifyjson, call, Addr});
         {ok, Url, RouteData} -> 
             log_req(St, Req, Url),
             dispatch_req(St, Qid, RouteData, {notifyjson, call, Url})
