@@ -2,10 +2,10 @@
 -include("mmyn.hrl").
 -include("mmyn_soap.hrl").
 -include("notify_soap.hrl").
--export([handler/3, notify/3]).
+-export([handler/4, notify/4]).
 
 
-handler("sendsms", _, [#'mmyn:SendSms'{fields=Request}]) ->
+handler(_Header, [#'mmyn:SendSms'{fields=Request}], "sendsms", _SessionValue) ->
     #'mmyn:SendSmsRequest'{sender=Sender, msisdn=Msisdn, message=Message, size=Size}=Request,
 
     {Status, Detail} = case Size of 
@@ -30,10 +30,10 @@ handler("sendsms", _, [#'mmyn:SendSms'{fields=Request}]) ->
             detail=Detail
         }
     },
-    {ok, Response};
+    [Response];
 
 
-handler("reply", _, [#'mmyn:Reply'{fields=Request}]) ->
+handler(_Header, [#'mmyn:Reply'{fields=Request}], "reply", _SessionValue) ->
     #'mmyn:ReplyRequest'{id=_Id, sender=Sender, msisdn=Msisdn, message=Message}=Request,
 
     {Status, Detail} = sms:send(Sender, Msisdn, Message, soap_reply),
@@ -44,12 +44,12 @@ handler("reply", _, [#'mmyn:Reply'{fields=Request}]) ->
             detail=Detail
         }
     },
-    {ok, Response};
+    [Response];
 
-handler(SoapAction, _, _) ->
+handler(_Header, _Body, SoapAction, _) ->
     {error, lists:concat(["SOAPAction not supported: ", SoapAction])}.
 
-notify("notify", _, [#'mmyn:Notify'{fields=Request}]) ->
+notify(_Header, [#'mmyn:Notify'{fields=Request}], "notify", _SessionValue) ->
     #'mmyn:NotifyRequest'{id=_Id, shortcode=_Sc, keyword=_Kw, 
         msisdn=_Msisdn, message=_Message, 'max-ttl'=Ttl} = Request,
 
@@ -62,8 +62,7 @@ notify("notify", _, [#'mmyn:Notify'{fields=Request}]) ->
         }
     },
 
-    {ok, Response};
+    [Response];
 
-notify(SoapAction, _, _) ->
+notify(_Header, _Body, SoapAction, _SessionValue) ->
     {error, lists:concat(["SOAPAction not supported: ", SoapAction])}.
-
