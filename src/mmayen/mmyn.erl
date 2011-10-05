@@ -103,9 +103,9 @@ init([]) ->
         {mmyn_soapsrv, start_link, []},
         permanent, 5000, worker, [mmyn_soapsrv]},
 
-    WebServer = {mmyn_misultin,
-        {mmyn_misultin, start_link, []},
-        permanent, 5000, worker, [mmyn_misultin]},
+    WebServer = {mmyn_yaws,
+        {mmyn_yaws, start_link, []},
+        permanent, 5000, worker, [mmyn_yaws]},
 
     Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, 
         NotifySoap, RxQ, RTable, RxSup, RxNanny, RxWkrSup, RxWkrNanny, 
