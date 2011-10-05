@@ -5,7 +5,7 @@
     {registered, 
       [backoff, txq, tx_sup, tx_nanny, rx_sup, rx_nanny, mmyn_misultin, mmyn, tlog]}, 
     {applications, [kernel, stdlib, sasl, ibrowse, log4erl, erlsom, 
-                    yaws, smpp34pdu, smpp34, detergent, mmynlib, mmynapp]}, 
+                    yaws, smpp34pdu, smpp34, detergent, mmynlib, mmynapi]}, 
     {mod, {mmyn, []}},
     {env, []}
  ]
