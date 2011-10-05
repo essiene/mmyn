@@ -67,9 +67,9 @@ init([]) ->
                                         {esmetx,stop},{undefined, undefined}]},
         permanent, 5000, worker, [tx_nanny]},
 
-    Notify = {notify, 
-        {notify, start_link, []},
-        permanent, 5000, worker, [notify]},
+    NotifySoap = {notifysoap, 
+        {notifysoap, start_link, []},
+        permanent, 5000, worker, [notifysoap]},
 
     RxQ = {rxq, 
         {rxq, start_link, []},
@@ -108,7 +108,7 @@ init([]) ->
         permanent, 5000, worker, [mmyn_misultin]},
 
     Processes = [Tlog, BackOff, TxQ, TxSup, TxNanny, 
-        Notify, RxQ, RTable, RxSup, RxNanny, RxWkrSup, RxWkrNanny, 
+        NotifySoap, RxQ, RTable, RxSup, RxNanny, RxWkrSup, RxWkrNanny, 
         SoapServer, WebServer],
 
     {ok, {{one_for_one, 10, 10}, Processes}}.
