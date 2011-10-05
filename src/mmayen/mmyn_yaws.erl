@@ -53,7 +53,7 @@ load_config() ->
         undefined ->
             {error, {config_not_found, http_env}};
         {ok, HttpEnv0} ->
-            HttpEnv = [{yaws, ?YAWS_NAME}|HttpEnv0],
+            HttpEnv = [{enable_soap, true}, {yaws, ?YAWS_NAME}|HttpEnv0],
             Id = proplists:get_value(id, HttpEnv, "mmayen"),
             case application:get_env(mmyn, http_server) of
                 undefined ->
@@ -67,12 +67,6 @@ load_config() ->
     end.
 
 apply_config(#rcfg{}=R) ->
-    yaws_api:setconf(R#rcfg.yaws_gconf, R#rcfg.yaws_sconf).
-
-get_env(App, Key, Default) ->
-    case application:get_env(App, Key) of
-        undefined ->
-            {ok, Default};
-        N ->
-            N
-    end.
+    yaws_api:setconf(R#rcfg.yaws_gconf, R#rcfg.yaws_sconf),
+    yaws_soap_srv:setup({mmyn_soap, handler}, "var/www/mmyn-2.0.1.wsdl"),
+    yaws_soap_srv:setup({mmyn_soap, notify}, "var/www/notify-2.0.wsdl").
